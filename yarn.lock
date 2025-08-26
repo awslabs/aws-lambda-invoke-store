@@ -11,7 +11,6 @@ __metadata:
   dependencies:
     "@tsconfig/node18": "npm:^18.2.4"
     "@types/node": "npm:^18.19.112"
-    globals: "npm:^16.0.0"
     typescript: "npm:~5.4.5"
     vitest: "npm:^3.1.1"
   languageName: unknown
@@ -913,13 +912,6 @@ __metadata:
   bin:
     glob: dist/esm/bin.mjs
   checksum: 10c0/19a9759ea77b8e3ca0a43c2f07ecddc2ad46216b786bb8f993c445aee80d345925a21e5280c7b7c6c59e860a0154b84e4b2b60321fea92cd3c56b4a7489f160e
-  languageName: node
-  linkType: hard
-
-"globals@npm:^16.0.0":
-  version: 16.3.0
-  resolution: "globals@npm:16.3.0"
-  checksum: 10c0/c62dc20357d1c0bf2be4545d6c4141265d1a229bf1c3294955efb5b5ef611145391895e3f2729f8603809e81b30b516c33e6c2597573844449978606aad6eb38
   languageName: node
   linkType: hard
 
