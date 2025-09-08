@@ -7,4 +7,29 @@ on:
 jobs:
   call-build:
     uses: ./.github/workflows/build.yml
-  # ToDo: Add release code for 0.0.2 onwards
+  release:
+    needs: call-build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: corepack
+        run: npm i -g corepack
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24.x" # Trusted publishing requires npm >=v11.5.1
+          cache: "yarn"
+
+      - run: yarn
+
+      - name: Create Release Pull Request or Publish to npm
+        id: changesets
+        uses: changesets/action@v1
+        with:
+          publish: yarn release
+          title: Publish <version>
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

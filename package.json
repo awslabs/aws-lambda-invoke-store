@@ -19,11 +19,13 @@
   },
   "scripts": {
     "build": "tsc",
+    "clean": "rm -rf dist",
     "test": "vitest run",
     "test:watch": "vitest watch",
-    "clean": "rm -rf dist"
+    "release": "yarn build && changeset publish"
   },
   "devDependencies": {
+    "@changesets/cli": "^2.29.6",
     "@tsconfig/node18": "^18.2.4",
     "@types/node": "^18.19.112",
     "typescript": "~5.4.5",
