@@ -1,3 +1,5 @@
+// Docs: https://github.com/changesets/changesets/blob/main/docs/modifying-changelog-format.md#writing-changelog-formatting-functions
+
 const REPO = "awslabs/aws-lambda-invoke-store";
 
 const getGithubCommitWithLink = (commit) =>
