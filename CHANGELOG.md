@@ -1,5 +1,11 @@
 # @aws/lambda-invoke-store
 
+## 0.0.2
+
+### Patch Changes
+
+- Set up release scripts ([c12740efa370880560a55c21cae1fcecad267053](https://github.com/awslabs/aws-lambda-invoke-store/commit/c12740efa370880560a55c21cae1fcecad267053))
+
 ## 0.0.1
 
 ### Major Changes
