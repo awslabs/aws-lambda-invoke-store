@@ -1,5 +1,11 @@
 # @aws/lambda-invoke-store
 
+## 0.1.0
+
+### Minor Changes
+
+- Add support for tenantId ([83fa470303d9283930e0f79e9c70ab09cbca6771](https://github.com/awslabs/aws-lambda-invoke-store/commit/83fa470303d9283930e0f79e9c70ab09cbca6771))
+
 ## 0.0.2
 
 ### Patch Changes

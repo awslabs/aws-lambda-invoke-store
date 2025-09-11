@@ -1,6 +1,6 @@
 {
   "name": "@aws/lambda-invoke-store",
-  "version": "0.0.2",
+  "version": "0.1.0",
   "description": "Invoke scoped data storage for AWS Lambda Node.js Runtime Environment",
   "homepage": "https://github.com/awslabs/aws-lambda-invoke-store",
   "main": "./dist/invoke-store.js",
