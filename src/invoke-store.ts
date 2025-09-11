@@ -12,6 +12,7 @@ if (!noGlobalAwsLambda) {
 const PROTECTED_KEYS = {
   REQUEST_ID: Symbol("_AWS_LAMBDA_REQUEST_ID"),
   X_RAY_TRACE_ID: Symbol("_AWS_LAMBDA_X_RAY_TRACE_ID"),
+  TENANT_ID: Symbol("_AWS_LAMBDA_TENANT_ID"),
 } as const;
 
 /**
@@ -83,6 +84,13 @@ class InvokeStoreImpl {
    */
   public static getXRayTraceId(): string | undefined {
     return this.get<string>(this.PROTECTED_KEYS.X_RAY_TRACE_ID);
+  }
+
+  /**
+   * Get the current tenant ID
+   */
+  public static getTenantId(): string | undefined {
+    return this.get<string>(this.PROTECTED_KEYS.TENANT_ID);
   }
 
   /**

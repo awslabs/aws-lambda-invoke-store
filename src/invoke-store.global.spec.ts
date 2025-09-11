@@ -75,12 +75,16 @@ describe("InvokeStore Global Singleton", () => {
   it("should maintain singleton behavior with dynamic imports", async () => {
     // GIVEN
     const testRequestId = "dynamic-import-test";
+    const testTenantId = "dynamic-import-tenant-id-test";
     const testKey = "dynamic-key";
     const testValue = "dynamic-value";
 
     // WHEN - Set up context with original import
     await OriginalImport.run(
-      { [OriginalImport.PROTECTED_KEYS.REQUEST_ID]: testRequestId },
+      {
+        [OriginalImport.PROTECTED_KEYS.REQUEST_ID]: testRequestId,
+        [OriginalImport.PROTECTED_KEYS.TENANT_ID]: testTenantId,
+      },
       async () => {
         OriginalImport.set(testKey, testValue);
 
@@ -91,6 +95,7 @@ describe("InvokeStore Global Singleton", () => {
         // THEN - Dynamically imported instance should see the same context
         expect(DynamicImport).toBe(OriginalImport); // Same instance
         expect(DynamicImport.getRequestId()).toBe(testRequestId);
+        expect(DynamicImport.getTenantId()).toBe(testTenantId);
         expect(DynamicImport.get(testKey)).toBe(testValue);
 
         // WHEN - Set a new value using dynamic import
@@ -132,6 +137,7 @@ describe("InvokeStore Existing Instance", () => {
       set: vi.fn(),
       getRequestId: vi.fn().mockReturnValue("mock-request-id"),
       getXRayTraceId: vi.fn(),
+      getTenantId: vi.fn().mockReturnValue("my-test-tenant-id"),
       hasContext: vi.fn(),
     };
 
@@ -144,6 +150,7 @@ describe("InvokeStore Existing Instance", () => {
     // THEN
     expect(ReimportedStore).toBe(mockInstance);
     expect(ReimportedStore.getRequestId()).toBe("mock-request-id");
+    expect(ReimportedStore.getTenantId()).toBe("my-test-tenant-id");
   });
 });
 

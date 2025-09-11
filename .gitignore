@@ -110,3 +110,6 @@ dist
 !.yarn/releases
 !.yarn/sdks
 !.yarn/versions
+
+# Yarn is preferred in this package
+package-lock.json
