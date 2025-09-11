@@ -99,6 +99,14 @@ Convenience method to get the current request ID.
 const requestId = InvokeStore.getRequestId(); // Returns '-' if outside context
 ```
 
+### InvokeStore.getTenantId()
+
+Convenience method to get the tenant ID.
+
+```typescript
+const requestId = InvokeStore.getTenantId();
+```
+
 ### InvokeStore.getXRayTraceId()
 
 Convenience method to get the current [X-Ray trace ID](https://docs.aws.amazon.com/xray/latest/devguide/xray-concepts.html#xray-concepts-traces). This ID is used for distributed tracing across AWS services.
