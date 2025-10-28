@@ -1,5 +1,11 @@
 # @aws/lambda-invoke-store
 
+## 0.1.1
+
+### Patch Changes
+
+- Update build configuration to output ESM and CommonJS ([b34bfcfb20299f8affbd0c0f33266bad2a0009a7](https://github.com/awslabs/aws-lambda-invoke-store/commit/b34bfcfb20299f8affbd0c0f33266bad2a0009a7))
+
 ## 0.1.0
 
 ### Minor Changes
