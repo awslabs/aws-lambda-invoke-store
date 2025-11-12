@@ -19,7 +19,7 @@ describe("InvokeStore", () => {
       const isolateTasks = Promise.all([
         InvokeStore.run(
           {
-            [InvokeStoreBase.PROTECTED_KEYS.REQUEST_ID]: "request-1",
+            [InvokeStore.PROTECTED_KEYS.REQUEST_ID]: "request-1",
             [InvokeStore.PROTECTED_KEYS.X_RAY_TRACE_ID]: "trace-1",
           },
           async () => {
