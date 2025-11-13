@@ -1,3 +1,5 @@
+import { time } from "node:console";
+
 interface Context {
   [key: string]: unknown;
   [key: symbol]: unknown;
@@ -92,8 +94,13 @@ class InvokeStoreMulti extends InvokeStoreBase {
 
   constructor() {
     super();
-    const asyncHooks = require('node:async_hooks') as typeof import("node:async_hooks");
-    this.als = new asyncHooks.AsyncLocalStorage<Context>();
+  }
+
+  static async create(): Promise<InvokeStoreMulti> {
+    const instance = new InvokeStoreMulti();
+    const asyncHooks = await import('node:async_hooks');
+    instance.als = new asyncHooks.AsyncLocalStorage<Context>();
+    return instance;
   }
 
   getContext(): Context | undefined {
@@ -130,23 +137,25 @@ interface InvokeStoreConfig {
   env?: NodeJS.ProcessEnv;
 }
 
-export const createInvokeStore = (storeConfig?: InvokeStoreConfig): InvokeStoreBase => {
+const createInvokeStore = async (storeConfig?: InvokeStoreConfig): Promise<InvokeStoreBase> => {
   const env = storeConfig?.env ?? process.env;
   const isMulti = 'AWS_LAMBDA_MAX_CONCURRENCY' in (env ?? {});
-  console.log(`isMulti is` + isMulti);
-  const InvokeStoreImpl = isMulti ? InvokeStoreMulti : InvokeStoreSingle;
+  
+  const instanceItem = isMulti 
+    ? await InvokeStoreMulti.create() 
+    : new InvokeStoreSingle();
 
   if (!NO_GLOBAL_AWS_LAMBDA && globalThis.awslambda?.InvokeStore) {
     return globalThis.awslambda.InvokeStore;
   }
-
-  const instance = new InvokeStoreImpl();
   
   if (!NO_GLOBAL_AWS_LAMBDA && globalThis.awslambda) {
-    globalThis.awslambda.InvokeStore = instance;
+    globalThis.awslambda.InvokeStore = instanceItem;
   }
-  console.log('returning instance = ' + instance.constructor.name);
-  return instance;
-}
 
-export const InvokeStore = createInvokeStore();
+  return instanceItem;
+};
+
+let InvokeStore = createInvokeStore();
+
+export { createInvokeStore, InvokeStore };

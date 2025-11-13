@@ -4,8 +4,8 @@ import { createInvokeStore } from "./invoke-store.js";
 describe.each([
   { label: 'multi-concurrency', config: { env: { AWS_LAMBDA_MAX_CONCURRENCY: '10' } } },
   { label: 'single-concurrency', config: undefined }
-])('InvokeStore with %s', ({ config }) => {
-  const InvokeStore = createInvokeStore(config);
+])('InvokeStore with %s', async ({ config }) => {
+  const InvokeStore = await createInvokeStore(config);
   describe("InvokeStore", () => {
     beforeEach(() => {
       vi.useFakeTimers();
@@ -204,6 +204,7 @@ describe.each([
     describe("edge cases", () => {
       it("should handle synchronous functions", () => {
         // WHEN
+        console.log(InvokeStore)
         const result = InvokeStore.run(
           {
             [InvokeStore.PROTECTED_KEYS.REQUEST_ID]: "test-id",

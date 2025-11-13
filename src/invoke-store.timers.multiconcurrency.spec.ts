@@ -5,8 +5,8 @@ import { createInvokeStore } from "./invoke-store.js";
  * These tests specifically verify context preservation across various
  * timer and async APIs without using fake timers.
  */
-describe("InvokeStore timer functions context preservation", () => {
-  const InvokeStore = createInvokeStore({ 
+describe("InvokeStore timer functions context preservation", async () => {
+  const InvokeStore = await createInvokeStore({ 
     env: { AWS_LAMBDA_MAX_CONCURRENCY: '10' } 
   });
 

@@ -2,8 +2,8 @@ import { describe, it, expect } from 'vitest';
 import { createInvokeStore } from "./invoke-store.js"
 
 describe('InvokeStore implementations', () => {
-  it('should create different implementations based on environment', () => {
-    const singleStore = createInvokeStore({
+  it('should create different implementations based on environment', async () => {
+    const singleStore = await createInvokeStore({
       env: {}
     });
     
@@ -13,7 +13,7 @@ describe('InvokeStore implementations', () => {
       globalThis.awslambda.InvokeStore = undefined;
     }
 
-    const multiStore = createInvokeStore({
+    const multiStore = await createInvokeStore({
       env: { AWS_LAMBDA_MAX_CONCURRENCY: '10' }
     });
     

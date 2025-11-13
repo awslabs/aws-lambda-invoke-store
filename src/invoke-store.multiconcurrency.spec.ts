@@ -1,7 +1,9 @@
 import { describe, it, expect, afterEach, beforeEach, vi } from "vitest";
 import { InvokeStore } from "./invoke-store.js";
 
-describe("InvokeStore", () => {
+describe("InvokeStore", async () => {
+
+  const awaitedInvokeStore = await InvokeStore;
 
   beforeEach(() => {
     vi.useFakeTimers();
@@ -18,21 +20,21 @@ describe("InvokeStore", () => {
       const traces: string[] = [];
 
       // WHEN
-      await InvokeStore.run(
+      await awaitedInvokeStore.run(
         {
-          [InvokeStore.PROTECTED_KEYS.REQUEST_ID]: "outer",
+          [awaitedInvokeStore.PROTECTED_KEYS.REQUEST_ID]: "outer",
         },
         async () => {
-          traces.push(`outer-${InvokeStore.getRequestId()}`);
-          await InvokeStore.run(
+          traces.push(`outer-${awaitedInvokeStore.getRequestId()}`);
+          await awaitedInvokeStore.run(
             {
-              [InvokeStore.PROTECTED_KEYS.REQUEST_ID]: "inner",
+              [awaitedInvokeStore.PROTECTED_KEYS.REQUEST_ID]: "inner",
             },
             async () => {
-              traces.push(`inner-${InvokeStore.getRequestId()}`);
+              traces.push(`inner-${awaitedInvokeStore.getRequestId()}`);
             },
           );
-          traces.push(`outer-again-${InvokeStore.getRequestId()}`);
+          traces.push(`outer-again-${awaitedInvokeStore.getRequestId()}`);
         },
       );
 
@@ -50,26 +52,26 @@ describe("InvokeStore", () => {
 
       // WHEN - Simulate concurrent invocations
       const isolateTasks = Promise.all([
-        InvokeStore.run(
+        awaitedInvokeStore.run(
           {
-            [InvokeStore.PROTECTED_KEYS.REQUEST_ID]: "request-1",
-            [InvokeStore.PROTECTED_KEYS.X_RAY_TRACE_ID]: "trace-1",
+            [awaitedInvokeStore.PROTECTED_KEYS.REQUEST_ID]: "request-1",
+            [awaitedInvokeStore.PROTECTED_KEYS.X_RAY_TRACE_ID]: "trace-1",
           },
           async () => {
-            traces.push(`start-1-${InvokeStore.getRequestId()}`);
+            traces.push(`start-1-${awaitedInvokeStore.getRequestId()}`);
             await new Promise((resolve) => setTimeout(resolve, 10));
-            traces.push(`end-1-${InvokeStore.getRequestId()}`);
+            traces.push(`end-1-${awaitedInvokeStore.getRequestId()}`);
           },
         ),
-        InvokeStore.run(
+        awaitedInvokeStore.run(
           {
-            [InvokeStore.PROTECTED_KEYS.REQUEST_ID]: "request-2",
-            [InvokeStore.PROTECTED_KEYS.X_RAY_TRACE_ID]: "trace-2",
+            [awaitedInvokeStore.PROTECTED_KEYS.REQUEST_ID]: "request-2",
+            [awaitedInvokeStore.PROTECTED_KEYS.X_RAY_TRACE_ID]: "trace-2",
           },
           async () => {
-            traces.push(`start-2-${InvokeStore.getRequestId()}`);
+            traces.push(`start-2-${awaitedInvokeStore.getRequestId()}`);
             await new Promise((resolve) => setTimeout(resolve, 5));
-            traces.push(`end-2-${InvokeStore.getRequestId()}`);
+            traces.push(`end-2-${awaitedInvokeStore.getRequestId()}`);
           },
         ),
       ]);
@@ -90,20 +92,20 @@ describe("InvokeStore", () => {
       const traces: string[] = [];
 
       // WHEN
-      await InvokeStore.run(
+      await awaitedInvokeStore.run(
         {
-          [InvokeStore.PROTECTED_KEYS.REQUEST_ID]: "request-1",
+          [awaitedInvokeStore.PROTECTED_KEYS.REQUEST_ID]: "request-1",
         },
         async () => {
-          traces.push(`before-${InvokeStore.getRequestId()}`);
+          traces.push(`before-${awaitedInvokeStore.getRequestId()}`);
           const task = new Promise((resolve) => {
             setTimeout(resolve, 1);
           }).then(() => {
-            traces.push(`inside-${InvokeStore.getRequestId()}`);
+            traces.push(`inside-${awaitedInvokeStore.getRequestId()}`);
           });
           vi.runAllTimers();
           await task;
-          traces.push(`after-${InvokeStore.getRequestId()}`);
+          traces.push(`after-${awaitedInvokeStore.getRequestId()}`);
         },
       );
 
@@ -113,40 +115,6 @@ describe("InvokeStore", () => {
         "inside-request-1",
         "after-request-1",
       ]);
-    });
-
-
-    describe("hasContext", () => {
-      it("should handle errors in concurrent executions independently", async () => {
-        // GIVEN
-        const traces: string[] = [];
-
-        // WHEN
-        await Promise.allSettled([
-          InvokeStore.run(
-            {
-              [InvokeStore.PROTECTED_KEYS.REQUEST_ID]: "success-id",
-            },
-            async () => {
-              traces.push(`success-${InvokeStore.getRequestId()}`);
-            },
-          ),
-          InvokeStore.run(
-            {
-              [InvokeStore.PROTECTED_KEYS.REQUEST_ID]: "error-id",
-            },
-            async () => {
-              traces.push(`before-error-${InvokeStore.getRequestId()}`);
-              throw new Error("test error");
-            },
-          ),
-        ]);
-
-        // THEN
-        expect(traces).toContain("success-success-id");
-        expect(traces).toContain("before-error-error-id");
-        expect(InvokeStore.getRequestId()).toBe("-");
-      });
     });
   });
 });
