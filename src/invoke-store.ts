@@ -1,18 +1,3 @@
-declare global {
-  var awslambda: {
-    InvokeStore?: InvokeStoreBase;
-    [key: string]: unknown;
-  };
-}
-
-const noGlobalAwsLambda =
-  process.env["AWS_LAMBDA_NODEJS_NO_GLOBAL_AWSLAMBDA"] === "1" ||
-  process.env["AWS_LAMBDA_NODEJS_NO_GLOBAL_AWSLAMBDA"] === "true";
-
-if (!noGlobalAwsLambda) {
-  globalThis.awslambda = globalThis.awslambda || {};
-}
-
 interface Context {
   [key: string]: unknown;
   [key: symbol]: unknown;
@@ -24,8 +9,24 @@ const PROTECTED_KEYS = {
   TENANT_ID: Symbol("_AWS_LAMBDA_TENANT_ID"),
 } as const;
 
+const NO_GLOBAL_AWS_LAMBDA =
+
+  process.env["AWS_LAMBDA_NODEJS_NO_GLOBAL_AWSLAMBDA"] === "1" ||
+  process.env["AWS_LAMBDA_NODEJS_NO_GLOBAL_AWSLAMBDA"] === "true";
+
+declare global {
+  var awslambda: {
+    InvokeStore?: InvokeStoreBase;
+    [key: string]: unknown;
+  };
+}
+
+if (!NO_GLOBAL_AWS_LAMBDA) {
+  globalThis.awslambda = globalThis.awslambda || {};
+}
+
 abstract class InvokeStoreBase {
-  readonly PROTECTED_KEYS = PROTECTED_KEYS;
+  protected readonly PROTECTED_KEYS = PROTECTED_KEYS;
 
   abstract getContext(): Context | undefined;
   abstract hasContext(): boolean;
@@ -37,28 +38,22 @@ abstract class InvokeStoreBase {
     return Object.values(PROTECTED_KEYS).includes(key as symbol);
   }
 
-  public getRequestId(): string | undefined {
+  getRequestId(): string | undefined {
     return this.get<string>(PROTECTED_KEYS.REQUEST_ID) ?? "-";
   }
 
-  public getXRayTraceId(): string | undefined {
+  getXRayTraceId(): string | undefined {
     return this.get<string>(PROTECTED_KEYS.X_RAY_TRACE_ID);
   }
 
-  public getTenantId(): string | undefined {
+  getTenantId(): string | undefined {
     return this.get<string>(PROTECTED_KEYS.TENANT_ID);
   }
 }
 
+// Single Context Implementation
 class InvokeStoreSingle extends InvokeStoreBase {
   private currentContext?: Context;
-
-  constructor() {
-    super();
-    this.getRequestId = super.getRequestId;
-    this.getXRayTraceId = super.getXRayTraceId;
-    this.getTenantId = super.getTenantId;
-  }
 
   getContext(): Context | undefined {
     return this.currentContext;
@@ -77,9 +72,7 @@ class InvokeStoreSingle extends InvokeStoreBase {
       throw new Error(`Cannot modify protected Lambda context field: ${String(key)}`);
     }
 
-    if (!this.currentContext) {
-      this.currentContext = {};
-    }
+    this.currentContext = this.currentContext || {};
     this.currentContext[key] = value;
   }
 
@@ -91,9 +84,9 @@ class InvokeStoreSingle extends InvokeStoreBase {
       this.currentContext = undefined;
     }
   }
-
 }
 
+// Multi Context Implementation
 class InvokeStoreMulti extends InvokeStoreBase {
   private als!: import("node:async_hooks").AsyncLocalStorage<Context>;
 
@@ -101,9 +94,6 @@ class InvokeStoreMulti extends InvokeStoreBase {
     super();
     const asyncHooks = require('node:async_hooks') as typeof import("node:async_hooks");
     this.als = new asyncHooks.AsyncLocalStorage<Context>();
-    this.getRequestId = super.getRequestId;
-    this.getXRayTraceId = super.getXRayTraceId;
-    this.getTenantId = super.getTenantId;
   }
 
   getContext(): Context | undefined {
@@ -136,27 +126,27 @@ class InvokeStoreMulti extends InvokeStoreBase {
   }
 }
 
-type InvokeStoreConfig = {
+interface InvokeStoreConfig {
   env?: NodeJS.ProcessEnv;
 }
 
 export const createInvokeStore = (storeConfig?: InvokeStoreConfig): InvokeStoreBase => {
   const env = storeConfig?.env ?? process.env;
   const isMulti = 'AWS_LAMBDA_MAX_CONCURRENCY' in (env ?? {});
+  console.log(`isMulti is` + isMulti);
   const InvokeStoreImpl = isMulti ? InvokeStoreMulti : InvokeStoreSingle;
 
-  if (!noGlobalAwsLambda && globalThis.awslambda?.InvokeStore) {
+  if (!NO_GLOBAL_AWS_LAMBDA && globalThis.awslambda?.InvokeStore) {
     return globalThis.awslambda.InvokeStore;
   }
 
   const instance = new InvokeStoreImpl();
   
-  if (!noGlobalAwsLambda && globalThis.awslambda) {
+  if (!NO_GLOBAL_AWS_LAMBDA && globalThis.awslambda) {
     globalThis.awslambda.InvokeStore = instance;
   }
-
+  console.log('returning instance = ' + instance.constructor.name);
   return instance;
 }
 
-const log = createInvokeStore();
-export const InvokeStore = log;
+export const InvokeStore = createInvokeStore();
