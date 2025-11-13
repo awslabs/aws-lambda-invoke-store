@@ -25,6 +25,15 @@ if (!NO_GLOBAL_AWS_LAMBDA) {
   globalThis.awslambda = globalThis.awslambda || {};
 }
 
+/**
+ * Base class for AWS Lambda context storage implementations.
+ * Provides core functionality for managing Lambda execution context.
+ * 
+ * Implementations handle either single-context (InvokeStoreSingle) or 
+ * multi-context (InvokeStoreMulti) scenarios based on Lambda's execution environment.
+ * 
+ * @public
+ */
 export abstract class InvokeStoreBase {
   public readonly PROTECTED_KEYS = PROTECTED_KEYS;
 
@@ -51,7 +60,10 @@ export abstract class InvokeStoreBase {
   }
 }
 
-// Single Context Implementation
+/**
+ * Single Context Implementation
+ * @internal
+ */
 class InvokeStoreSingle extends InvokeStoreBase {
   private currentContext?: Context;
 
@@ -90,7 +102,10 @@ class InvokeStoreSingle extends InvokeStoreBase {
   }
 }
 
-// Multi Context Implementation
+/**
+ * Multi Context Implementation
+ * @internal
+ */
 class InvokeStoreMulti extends InvokeStoreBase {
   private als!: import("node:async_hooks").AsyncLocalStorage<Context>;
 
@@ -139,6 +154,14 @@ interface InvokeStoreConfig {
   env?: NodeJS.ProcessEnv;
 }
 
+/**
+ * Provides access to AWS Lambda execution context storage.
+ * Supports both single-context and multi-context environments through different implementations.
+ * 
+ * The store manages protected Lambda context fields and allows storing/retrieving custom values
+ * within the execution context.
+ * @public
+ */
 export namespace InvokeStore {
   let instance: InvokeStoreBase | null = null;
 

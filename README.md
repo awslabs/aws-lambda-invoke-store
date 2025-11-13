@@ -65,7 +65,6 @@ async function processData(event) {
 ## API Reference
 
 ### InvokeStore.getInstance()
-Initialization
 First, get an instance of the InvokeStore:
 ```typescript
 const invokeStore = await InvokeStore.getInstance();
