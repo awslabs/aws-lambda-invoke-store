@@ -1,5 +1,3 @@
-import { time } from "node:console";
-
 interface Context {
   [key: string]: unknown;
   [key: symbol]: unknown;
