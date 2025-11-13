@@ -53,6 +53,13 @@ abstract class InvokeStoreBase {
 class InvokeStoreSingle extends InvokeStoreBase {
   private currentContext?: Context;
 
+  constructor() {
+    super();
+    this.getRequestId = super.getRequestId;
+    this.getXRayTraceId = super.getXRayTraceId;
+    this.getTenantId = super.getTenantId;
+  }
+
   getContext(): Context | undefined {
     return this.currentContext;
   }
@@ -73,7 +80,6 @@ class InvokeStoreSingle extends InvokeStoreBase {
     if (!this.currentContext) {
       this.currentContext = {};
     }
-    
     this.currentContext[key] = value;
   }
 
@@ -130,10 +136,15 @@ class InvokeStoreMulti extends InvokeStoreBase {
   }
 }
 
-const isMulti = 'AWS_LAMBDA_MAX_CONCURRENCY' in (process.env ?? {});
-const InvokeStoreImpl = isMulti ? InvokeStoreMulti : InvokeStoreSingle;
+type InvokeStoreConfig = {
+  env?: NodeJS.ProcessEnv;
+}
 
-const createInvokeStore = (): InvokeStoreBase => {
+export const createInvokeStore = (storeConfig?: InvokeStoreConfig): InvokeStoreBase => {
+  const env = storeConfig?.env ?? process.env;
+  const isMulti = 'AWS_LAMBDA_MAX_CONCURRENCY' in (env ?? {});
+  const InvokeStoreImpl = isMulti ? InvokeStoreMulti : InvokeStoreSingle;
+
   if (!noGlobalAwsLambda && globalThis.awslambda?.InvokeStore) {
     return globalThis.awslambda.InvokeStore;
   }
