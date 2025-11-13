@@ -25,8 +25,8 @@ if (!NO_GLOBAL_AWS_LAMBDA) {
   globalThis.awslambda = globalThis.awslambda || {};
 }
 
-abstract class InvokeStoreBase {
-  protected readonly PROTECTED_KEYS = PROTECTED_KEYS;
+export abstract class InvokeStoreBase {
+  public readonly PROTECTED_KEYS = PROTECTED_KEYS;
 
   abstract getContext(): Context | undefined;
   abstract hasContext(): boolean;
