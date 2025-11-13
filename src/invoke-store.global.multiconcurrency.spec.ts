@@ -34,7 +34,7 @@ describe("InvokeStore Global Singleton", () => {
     const testKey = "dynamic-key";
     const testValue = "dynamic-value";
 
-    const originalImportAwaited = await OriginalImport;
+    const originalImportAwaited = await OriginalImport.getInstance();
 
     // WHEN - Set up context with original import
     await originalImportAwaited.run(
@@ -47,7 +47,7 @@ describe("InvokeStore Global Singleton", () => {
 
         // Dynamically import the module again
         const dynamicModule = await import("./invoke-store.js");
-        const DynamicImport = await dynamicModule.InvokeStore;
+        const DynamicImport = await dynamicModule.InvokeStore.getInstance();
 
         // THEN - Dynamically imported instance should see the same context
         expect(DynamicImport).toBe(originalImportAwaited); // Same instance

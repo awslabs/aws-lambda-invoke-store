@@ -86,6 +86,10 @@ class InvokeStoreSingle extends InvokeStoreBase {
       this.currentContext = undefined;
     }
   }
+
+  getInstance(): InvokeStoreBase {
+    return this;
+  }
 }
 
 // Multi Context Implementation
@@ -137,25 +141,42 @@ interface InvokeStoreConfig {
   env?: NodeJS.ProcessEnv;
 }
 
-const createInvokeStore = async (storeConfig?: InvokeStoreConfig): Promise<InvokeStoreBase> => {
-  const env = storeConfig?.env ?? process.env;
-  const isMulti = 'AWS_LAMBDA_MAX_CONCURRENCY' in (env ?? {});
-  
-  const instanceItem = isMulti 
-    ? await InvokeStoreMulti.create() 
-    : new InvokeStoreSingle();
+export namespace InvokeStore {
+  let instance: InvokeStoreBase | null = null;
+  let initializationPromise: Promise<InvokeStoreBase> | null = null;
 
-  if (!NO_GLOBAL_AWS_LAMBDA && globalThis.awslambda?.InvokeStore) {
-    return globalThis.awslambda.InvokeStore;
+  export async function getInstance(storeConfig?: InvokeStoreConfig): Promise<InvokeStoreBase> {
+
+    if (instance &&  storeConfig ) {
+      console.log('return because instance is set');
+      return instance;
+    }
+
+    if (initializationPromise) {
+      console.log('return because initializationPromise is set');
+      return initializationPromise;
+    }
+
+    initializationPromise = (async () => {
+    const env = storeConfig?.env ?? process.env;
+    const isMulti = 'AWS_LAMBDA_MAX_CONCURRENCY' in (env ?? {});
+      
+      const instanceItem = isMulti 
+        ? await InvokeStoreMulti.create() 
+        : new InvokeStoreSingle();
+
+      if (!NO_GLOBAL_AWS_LAMBDA && globalThis.awslambda?.InvokeStore) {
+        instance = globalThis.awslambda.InvokeStore;
+      } else if (!NO_GLOBAL_AWS_LAMBDA && globalThis.awslambda) {
+        instance = instanceItem;
+        globalThis.awslambda.InvokeStore = instanceItem;
+      } else {
+        instance = instanceItem;
+      }
+
+      return instance;
+    })();
+
+    return initializationPromise;
   }
-  
-  if (!NO_GLOBAL_AWS_LAMBDA && globalThis.awslambda) {
-    globalThis.awslambda.InvokeStore = instanceItem;
-  }
-
-  return instanceItem;
-};
-
-let InvokeStore = createInvokeStore();
-
-export { createInvokeStore, InvokeStore };
+}

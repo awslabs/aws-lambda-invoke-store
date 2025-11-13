@@ -1,11 +1,11 @@
 import { describe, it, expect, afterEach, beforeEach, vi } from "vitest";
-import { createInvokeStore } from "./invoke-store.js";
+import { InvokeStore } from "./invoke-store.js";
 
 describe.each([
   { label: 'multi-concurrency', config: { env: { AWS_LAMBDA_MAX_CONCURRENCY: '10' } } },
   { label: 'single-concurrency', config: undefined }
 ])('InvokeStore with %s', async ({ config }) => {
-  const InvokeStore = await createInvokeStore(config);
+  const invokeStore = await InvokeStore.getInstance(config);
   describe("InvokeStore", () => {
     beforeEach(() => {
       vi.useFakeTimers();
@@ -18,8 +18,8 @@ describe.each([
     describe("getRequestId and getXRayTraceId", () => {
       it("should return placeholder when called outside run context", () => {
         // WHEN
-        const requestId = InvokeStore.getRequestId();
-        const traceId = InvokeStore.getXRayTraceId();
+        const requestId = invokeStore.getRequestId();
+        const traceId = invokeStore.getXRayTraceId();
 
         // THEN
         expect(requestId).toBe("-");
@@ -28,15 +28,15 @@ describe.each([
 
       it("should return current invoke IDs when called within run context", async () => {
         // WHEN
-        const result = await InvokeStore.run(
+        const result = await invokeStore.run(
           {
-            [InvokeStore.PROTECTED_KEYS.REQUEST_ID]: "test-id",
-            [InvokeStore.PROTECTED_KEYS.X_RAY_TRACE_ID]: "trace-id",
+            [invokeStore.PROTECTED_KEYS.REQUEST_ID]: "test-id",
+            [invokeStore.PROTECTED_KEYS.X_RAY_TRACE_ID]: "trace-id",
           },
           () => {
             return {
-              requestId: InvokeStore.getRequestId(),
-              traceId: InvokeStore.getXRayTraceId(),
+              requestId: invokeStore.getRequestId(),
+              traceId: invokeStore.getXRayTraceId(),
             };
           },
         );
@@ -50,16 +50,16 @@ describe.each([
     describe("custom properties", () => {
       it("should allow setting and getting custom properties", async () => {
         // WHEN
-        const result = await InvokeStore.run(
+        const result = await invokeStore.run(
           {
-            [InvokeStore.PROTECTED_KEYS.REQUEST_ID]: "test-id",
+            [invokeStore.PROTECTED_KEYS.REQUEST_ID]: "test-id",
             customProp: "initial-value",
           },
           () => {
-            InvokeStore.set("dynamicProp", "dynamic-value");
+            invokeStore.set("dynamicProp", "dynamic-value");
             return {
-              initial: InvokeStore.get("customProp"),
-              dynamic: InvokeStore.get("dynamicProp"),
+              initial: invokeStore.get("customProp"),
+              dynamic: invokeStore.get("dynamicProp"),
             };
           },
         );
@@ -71,18 +71,18 @@ describe.each([
 
       it("should prevent modifying protected Lambda fields", async () => {
         // WHEN & THEN
-        await InvokeStore.run(
+        await invokeStore.run(
           {
-            [InvokeStore.PROTECTED_KEYS.REQUEST_ID]: "test-id",
+            [invokeStore.PROTECTED_KEYS.REQUEST_ID]: "test-id",
           },
           () => {
             expect(() => {
-              InvokeStore.set(InvokeStore.PROTECTED_KEYS.REQUEST_ID, "new-id");
+              invokeStore.set(invokeStore.PROTECTED_KEYS.REQUEST_ID, "new-id");
             }).toThrow(/Cannot modify protected Lambda context field/);
 
             expect(() => {
-              InvokeStore.set(
-                InvokeStore.PROTECTED_KEYS.X_RAY_TRACE_ID,
+              invokeStore.set(
+                invokeStore.PROTECTED_KEYS.X_RAY_TRACE_ID,
                 "new-trace",
               );
             }).toThrow(/Cannot modify protected Lambda context field/);
@@ -94,7 +94,7 @@ describe.each([
     describe("getContext", () => {
       it("should return undefined when outside run context", () => {
         // WHEN
-        const context = InvokeStore.getContext();
+        const context = invokeStore.getContext();
 
         // THEN
         expect(context).toBeUndefined();
@@ -102,22 +102,22 @@ describe.each([
 
       it("should return complete context with Lambda and custom fields", async () => {
         // WHEN
-        const context = await InvokeStore.run(
+        const context = await invokeStore.run(
           {
-            [InvokeStore.PROTECTED_KEYS.REQUEST_ID]: "test-id",
-            [InvokeStore.PROTECTED_KEYS.X_RAY_TRACE_ID]: "trace-id",
+            [invokeStore.PROTECTED_KEYS.REQUEST_ID]: "test-id",
+            [invokeStore.PROTECTED_KEYS.X_RAY_TRACE_ID]: "trace-id",
             customField: "custom-value",
           },
           () => {
-            InvokeStore.set("dynamicField", "dynamic-value");
-            return InvokeStore.getContext();
+            invokeStore.set("dynamicField", "dynamic-value");
+            return invokeStore.getContext();
           },
         );
 
         // THEN
         expect(context).toEqual({
-          [InvokeStore.PROTECTED_KEYS.REQUEST_ID]: "test-id",
-          [InvokeStore.PROTECTED_KEYS.X_RAY_TRACE_ID]: "trace-id",
+          [invokeStore.PROTECTED_KEYS.REQUEST_ID]: "test-id",
+          [invokeStore.PROTECTED_KEYS.X_RAY_TRACE_ID]: "trace-id",
           customField: "custom-value",
           dynamicField: "dynamic-value",
         });
@@ -127,7 +127,7 @@ describe.each([
     describe("hasContext", () => {
       it("should return false when outside run context", () => {
         // WHEN
-        const hasContext = InvokeStore.hasContext();
+        const hasContext = invokeStore.hasContext();
 
         // THEN
         expect(hasContext).toBe(false);
@@ -135,12 +135,12 @@ describe.each([
 
       it("should return true when inside run context", async () => {
         // WHEN
-        const result = await InvokeStore.run(
+        const result = await invokeStore.run(
           {
-            [InvokeStore.PROTECTED_KEYS.REQUEST_ID]: "test-id",
+            [invokeStore.PROTECTED_KEYS.REQUEST_ID]: "test-id",
           },
           () => {
-            return InvokeStore.hasContext();
+            return invokeStore.hasContext();
           },
         );
 
@@ -155,9 +155,9 @@ describe.each([
         const error = new Error("test error");
 
         // WHEN
-        const promise = InvokeStore.run(
+        const promise = invokeStore.run(
           {
-            [InvokeStore.PROTECTED_KEYS.REQUEST_ID]: "test-id",
+            [invokeStore.PROTECTED_KEYS.REQUEST_ID]: "test-id",
           },
           async () => {
             throw error;
@@ -166,7 +166,7 @@ describe.each([
 
         // THEN
         await expect(promise).rejects.toThrow(error);
-        expect(InvokeStore.getRequestId()).toBe("-");
+        expect(invokeStore.getRequestId()).toBe("-");
       });
 
       it("should handle errors in concurrent executions independently", async () => {
@@ -175,20 +175,20 @@ describe.each([
 
         // WHEN
         await Promise.allSettled([
-          InvokeStore.run(
+          invokeStore.run(
             {
-              [InvokeStore.PROTECTED_KEYS.REQUEST_ID]: "success-id",
+              [invokeStore.PROTECTED_KEYS.REQUEST_ID]: "success-id",
             },
             async () => {
-              traces.push(`success-${InvokeStore.getRequestId()}`);
+              traces.push(`success-${invokeStore.getRequestId()}`);
             },
           ),
-          InvokeStore.run(
+          invokeStore.run(
             {
-              [InvokeStore.PROTECTED_KEYS.REQUEST_ID]: "error-id",
+              [invokeStore.PROTECTED_KEYS.REQUEST_ID]: "error-id",
             },
             async () => {
-              traces.push(`before-error-${InvokeStore.getRequestId()}`);
+              traces.push(`before-error-${invokeStore.getRequestId()}`);
               throw new Error("test error");
             },
           ),
@@ -197,7 +197,7 @@ describe.each([
         // THEN
         expect(traces).toContain("success-success-id");
         expect(traces).toContain("before-error-error-id");
-        expect(InvokeStore.getRequestId()).toBe("-");
+        expect(invokeStore.getRequestId()).toBe("-");
       });
     });
 
@@ -205,12 +205,12 @@ describe.each([
       it("should handle synchronous functions", () => {
         // WHEN
         console.log(InvokeStore)
-        const result = InvokeStore.run(
+        const result = invokeStore.run(
           {
-            [InvokeStore.PROTECTED_KEYS.REQUEST_ID]: "test-id",
+            [invokeStore.PROTECTED_KEYS.REQUEST_ID]: "test-id",
           },
           () => {
-            return InvokeStore.getRequestId();
+            return invokeStore.getRequestId();
           },
         );
 
@@ -223,9 +223,9 @@ describe.each([
         const error = new Error("immediate rejection");
 
         // WHEN
-        const promise = InvokeStore.run(
+        const promise = invokeStore.run(
           {
-            [InvokeStore.PROTECTED_KEYS.REQUEST_ID]: "test-id",
+            [invokeStore.PROTECTED_KEYS.REQUEST_ID]: "test-id",
           },
           () => {
             return Promise.reject(error);
@@ -234,7 +234,7 @@ describe.each([
 
         // THEN
         await expect(promise).rejects.toThrow(error);
-        expect(InvokeStore.getRequestId()).toBe("-");
+        expect(invokeStore.getRequestId()).toBe("-");
       });
     });
   });

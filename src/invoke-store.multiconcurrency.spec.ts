@@ -3,7 +3,7 @@ import { InvokeStore } from "./invoke-store.js";
 
 describe("InvokeStore", async () => {
 
-  const awaitedInvokeStore = await InvokeStore;
+  const invokeStore = await InvokeStore.getInstance();
 
   beforeEach(() => {
     vi.useFakeTimers();
@@ -20,21 +20,21 @@ describe("InvokeStore", async () => {
       const traces: string[] = [];
 
       // WHEN
-      await awaitedInvokeStore.run(
+      await invokeStore.run(
         {
-          [awaitedInvokeStore.PROTECTED_KEYS.REQUEST_ID]: "outer",
+          [invokeStore.PROTECTED_KEYS.REQUEST_ID]: "outer",
         },
         async () => {
-          traces.push(`outer-${awaitedInvokeStore.getRequestId()}`);
-          await awaitedInvokeStore.run(
+          traces.push(`outer-${invokeStore.getRequestId()}`);
+          await invokeStore.run(
             {
-              [awaitedInvokeStore.PROTECTED_KEYS.REQUEST_ID]: "inner",
+              [invokeStore.PROTECTED_KEYS.REQUEST_ID]: "inner",
             },
             async () => {
-              traces.push(`inner-${awaitedInvokeStore.getRequestId()}`);
+              traces.push(`inner-${invokeStore.getRequestId()}`);
             },
           );
-          traces.push(`outer-again-${awaitedInvokeStore.getRequestId()}`);
+          traces.push(`outer-again-${invokeStore.getRequestId()}`);
         },
       );
 
@@ -52,26 +52,26 @@ describe("InvokeStore", async () => {
 
       // WHEN - Simulate concurrent invocations
       const isolateTasks = Promise.all([
-        awaitedInvokeStore.run(
+        invokeStore.run(
           {
-            [awaitedInvokeStore.PROTECTED_KEYS.REQUEST_ID]: "request-1",
-            [awaitedInvokeStore.PROTECTED_KEYS.X_RAY_TRACE_ID]: "trace-1",
+            [invokeStore.PROTECTED_KEYS.REQUEST_ID]: "request-1",
+            [invokeStore.PROTECTED_KEYS.X_RAY_TRACE_ID]: "trace-1",
           },
           async () => {
-            traces.push(`start-1-${awaitedInvokeStore.getRequestId()}`);
+            traces.push(`start-1-${invokeStore.getRequestId()}`);
             await new Promise((resolve) => setTimeout(resolve, 10));
-            traces.push(`end-1-${awaitedInvokeStore.getRequestId()}`);
+            traces.push(`end-1-${invokeStore.getRequestId()}`);
           },
         ),
-        awaitedInvokeStore.run(
+        invokeStore.run(
           {
-            [awaitedInvokeStore.PROTECTED_KEYS.REQUEST_ID]: "request-2",
-            [awaitedInvokeStore.PROTECTED_KEYS.X_RAY_TRACE_ID]: "trace-2",
+            [invokeStore.PROTECTED_KEYS.REQUEST_ID]: "request-2",
+            [invokeStore.PROTECTED_KEYS.X_RAY_TRACE_ID]: "trace-2",
           },
           async () => {
-            traces.push(`start-2-${awaitedInvokeStore.getRequestId()}`);
+            traces.push(`start-2-${invokeStore.getRequestId()}`);
             await new Promise((resolve) => setTimeout(resolve, 5));
-            traces.push(`end-2-${awaitedInvokeStore.getRequestId()}`);
+            traces.push(`end-2-${invokeStore.getRequestId()}`);
           },
         ),
       ]);
@@ -92,20 +92,20 @@ describe("InvokeStore", async () => {
       const traces: string[] = [];
 
       // WHEN
-      await awaitedInvokeStore.run(
+      await invokeStore.run(
         {
-          [awaitedInvokeStore.PROTECTED_KEYS.REQUEST_ID]: "request-1",
+          [invokeStore.PROTECTED_KEYS.REQUEST_ID]: "request-1",
         },
         async () => {
-          traces.push(`before-${awaitedInvokeStore.getRequestId()}`);
+          traces.push(`before-${invokeStore.getRequestId()}`);
           const task = new Promise((resolve) => {
             setTimeout(resolve, 1);
           }).then(() => {
-            traces.push(`inside-${awaitedInvokeStore.getRequestId()}`);
+            traces.push(`inside-${invokeStore.getRequestId()}`);
           });
           vi.runAllTimers();
           await task;
-          traces.push(`after-${awaitedInvokeStore.getRequestId()}`);
+          traces.push(`after-${invokeStore.getRequestId()}`);
         },
       );
 
