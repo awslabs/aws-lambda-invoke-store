@@ -143,40 +143,28 @@ interface InvokeStoreConfig {
 
 export namespace InvokeStore {
   let instance: InvokeStoreBase | null = null;
-  let initializationPromise: Promise<InvokeStoreBase> | null = null;
 
   export async function getInstance(storeConfig?: InvokeStoreConfig): Promise<InvokeStoreBase> {
-
-    if (instance &&  storeConfig ) {
-      console.log('return because instance is set');
+    if (instance) {
       return instance;
     }
 
-    if (initializationPromise) {
-      console.log('return because initializationPromise is set');
-      return initializationPromise;
-    }
-
-    initializationPromise = (async () => {
     const env = storeConfig?.env ?? process.env;
     const isMulti = 'AWS_LAMBDA_MAX_CONCURRENCY' in (env ?? {});
-      
-      const instanceItem = isMulti 
-        ? await InvokeStoreMulti.create() 
-        : new InvokeStoreSingle();
+    
+    const newInstance = isMulti 
+      ? await InvokeStoreMulti.create() 
+      : new InvokeStoreSingle();
 
-      if (!NO_GLOBAL_AWS_LAMBDA && globalThis.awslambda?.InvokeStore) {
-        instance = globalThis.awslambda.InvokeStore;
-      } else if (!NO_GLOBAL_AWS_LAMBDA && globalThis.awslambda) {
-        instance = instanceItem;
-        globalThis.awslambda.InvokeStore = instanceItem;
-      } else {
-        instance = instanceItem;
-      }
+    if (!NO_GLOBAL_AWS_LAMBDA && globalThis.awslambda?.InvokeStore) {
+      instance = globalThis.awslambda.InvokeStore;
+    } else if (!NO_GLOBAL_AWS_LAMBDA && globalThis.awslambda) {
+      instance = newInstance;
+      globalThis.awslambda.InvokeStore = newInstance;
+    } else {
+      instance = newInstance;
+    }
 
-      return instance;
-    })();
-
-    return initializationPromise;
+    return instance;
   }
 }
