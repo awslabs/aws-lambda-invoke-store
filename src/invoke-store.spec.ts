@@ -82,7 +82,10 @@ describe.each([
           },
           () => {
             expect(() => {
-              invokeStore.set(InvokeStoreBase.PROTECTED_KEYS.REQUEST_ID, "new-id");
+              invokeStore.set(
+                InvokeStoreBase.PROTECTED_KEYS.REQUEST_ID,
+                "new-id",
+              );
             }).toThrow(/Cannot modify protected Lambda context field/);
 
             expect(() => {

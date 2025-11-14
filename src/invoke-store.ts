@@ -1,3 +1,4 @@
+import type { AsyncLocalStorage } from "node:async_hooks";
 interface Context {
   [key: string]: unknown;
   [key: symbol]: unknown;
@@ -97,7 +98,6 @@ class InvokeStoreSingle extends InvokeStoreBase {
       this.currentContext = undefined;
     }
   }
-
 }
 
 /**
@@ -105,7 +105,7 @@ class InvokeStoreSingle extends InvokeStoreBase {
  * @internal
  */
 class InvokeStoreMulti extends InvokeStoreBase {
-  private als!: import("node:async_hooks").AsyncLocalStorage<Context>;
+  private als!: AsyncLocalStorage<Context>;
 
   static async create(): Promise<InvokeStoreMulti> {
     const instance = new InvokeStoreMulti();
@@ -167,7 +167,6 @@ export namespace InvokeStore {
     }
 
     const isMulti = "AWS_LAMBDA_MAX_CONCURRENCY" in process.env;
-
     const newInstance = isMulti
       ? await InvokeStoreMulti.create()
       : new InvokeStoreSingle();
@@ -183,4 +182,17 @@ export namespace InvokeStore {
 
     return instance;
   }
+
+  export const _testing =
+    process.env.AWS_LAMBDA_BENCHMARK_MODE === "1"
+      ? {
+          reset: () => {
+            instance = null;
+            if (globalThis.awslambda?.InvokeStore) {
+              delete globalThis.awslambda.InvokeStore;
+            }
+            globalThis.awslambda = {};
+          },
+        }
+      : undefined;
 }
