@@ -98,9 +98,6 @@ class InvokeStoreSingle extends InvokeStoreBase {
     }
   }
 
-  getInstance(): InvokeStoreBase {
-    return this;
-  }
 }
 
 /**
