@@ -146,10 +146,6 @@ class InvokeStoreMulti extends InvokeStoreBase {
   }
 }
 
-interface InvokeStoreConfig {
-  env?: NodeJS.ProcessEnv;
-}
-
 /**
  * Provides access to AWS Lambda execution context storage.
  * Supports both single-context and multi-context environments through different implementations.
@@ -159,25 +155,26 @@ interface InvokeStoreConfig {
  * @public
  */
 export namespace InvokeStore {
-  let instance: InvokeStoreBase | null = null;
+  let instance: Promise<InvokeStoreBase> | null = null;
 
   export async function getInstanceAsync(): Promise<InvokeStoreBase> {
-    if (instance) {
-      return instance;
-    }
+    if (!instance) {
+      // Lock synchronously on first invoke by immediately assigning the promise
+      instance = (async () => {
+        const isMulti = "AWS_LAMBDA_MAX_CONCURRENCY" in process.env;
+        const newInstance = isMulti
+          ? await InvokeStoreMulti.create()
+          : new InvokeStoreSingle();
 
-    const isMulti = "AWS_LAMBDA_MAX_CONCURRENCY" in process.env;
-    const newInstance = isMulti
-      ? await InvokeStoreMulti.create()
-      : new InvokeStoreSingle();
-
-    if (!NO_GLOBAL_AWS_LAMBDA && globalThis.awslambda?.InvokeStore) {
-      instance = globalThis.awslambda.InvokeStore;
-    } else if (!NO_GLOBAL_AWS_LAMBDA && globalThis.awslambda) {
-      instance = newInstance;
-      globalThis.awslambda.InvokeStore = newInstance;
-    } else {
-      instance = newInstance;
+        if (!NO_GLOBAL_AWS_LAMBDA && globalThis.awslambda?.InvokeStore) {
+          return globalThis.awslambda.InvokeStore;
+        } else if (!NO_GLOBAL_AWS_LAMBDA && globalThis.awslambda) {
+          globalThis.awslambda.InvokeStore = newInstance;
+          return newInstance;
+        } else {
+          return newInstance;
+        }
+      })();
     }
 
     return instance;
