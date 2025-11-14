@@ -37,14 +37,14 @@ describe.each([
         vi.stubEnv("AWS_LAMBDA_MAX_CONCURRENCY", "2");
       }
       process.env = { ...originalEnv };
-      invokeStore = await InvokeStore.getInstance();
+      invokeStore = await InvokeStore.getInstanceAsync();
     });
 
     it("should store the instance in globalThis.awslambda", async () => {
       // THEN
       expect(globalThis.awslambda.InvokeStore).toBeDefined();
       expect(await globalThis.awslambda.InvokeStore).toBe(
-        await OriginalImport.getInstance(),
+        await OriginalImport.getInstanceAsync(),
       );
     });
 
@@ -54,7 +54,7 @@ describe.each([
       const testKey = "test-key";
       const testValue = "test-value";
 
-      const originalImport = await OriginalImport.getInstance();
+      const originalImport = await OriginalImport.getInstanceAsync();
 
       // WHEN - Use the original import to set up context
       await originalImport.run(
@@ -73,7 +73,7 @@ describe.each([
     it("should maintain the same storage across different references", async () => {
       // GIVEN
       const globalInstance = globalThis.awslambda.InvokeStore!;
-      const originalImport = await OriginalImport.getInstance();
+      const originalImport = await OriginalImport.getInstanceAsync();
       const testRequestId = "global-test";
       const testKey = "global-key";
       const testValue = "global-value";
@@ -130,7 +130,7 @@ describe.each([
       const { InvokeStore: ReimportedStore } = await import(
         "./invoke-store.js"
       );
-      const awaitedReimportedStore = await ReimportedStore.getInstance();
+      const awaitedReimportedStore = await ReimportedStore.getInstanceAsync();
 
       // THEN
       expect(awaitedReimportedStore).toBe(mockInstance);
@@ -159,7 +159,7 @@ describe.each([
 
       // WHEN - Import the module with the environment variable set
       const { InvokeStore } = await import("./invoke-store.js");
-      const invokeStore = await InvokeStore.getInstance();
+      const invokeStore = await InvokeStore.getInstanceAsync();
 
       // THEN - The global namespace should not be modified
       expect(globalThis.awslambda?.InvokeStore).toBeUndefined();
@@ -180,7 +180,7 @@ describe.each([
 
       // WHEN - Import the module with the environment variable set
       const { InvokeStore } = await import("./invoke-store.js");
-      const invokeStore = await InvokeStore.getInstance();
+      const invokeStore = await InvokeStore.getInstanceAsync();
 
       // THEN - The global namespace should not be modified
       expect(globalThis.awslambda?.InvokeStore).toBeUndefined();

@@ -18,7 +18,7 @@ describe.each([
       vi.useRealTimers();
     });
 
-    invokeStore = await InvokeStore.getInstance();
+    invokeStore = await InvokeStore.getInstanceAsync();
 
     describe("getRequestId and getXRayTraceId", () => {
       it("should return placeholder when called outside run context", () => {

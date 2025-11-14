@@ -161,7 +161,7 @@ interface InvokeStoreConfig {
 export namespace InvokeStore {
   let instance: InvokeStoreBase | null = null;
 
-  export async function getInstance(): Promise<InvokeStoreBase> {
+  export async function getInstanceAsync(): Promise<InvokeStoreBase> {
     if (instance) {
       return instance;
     }

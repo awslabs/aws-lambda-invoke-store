@@ -33,7 +33,7 @@ export const handler = async (event, context) => {
   // The RIC has already initialized the InvokeStore with requestId and X-Ray traceId
 
   // Access Lambda context data
-  const invokeStore = await InvokeStore.getInstance();
+  const invokeStore = await InvokeStore.getInstanceAsync();
   console.log(`Processing request: ${invokeStore.getRequestId()}`);
 
   // Store custom data
@@ -54,7 +54,7 @@ export const handler = async (event, context) => {
 // Context is preserved in async operations
 async function processData(event) {
   // Still has access to the same invoke context
-  const invokeStore = await InvokeStore.getInstance();
+  const invokeStore = await InvokeStore.getInstanceAsync();
   console.log(`Processing in same context: ${invokeStore.getRequestId()}`);
 
   // Can set additional data
@@ -64,10 +64,10 @@ async function processData(event) {
 
 ## API Reference
 
-### InvokeStore.getInstance()
+### InvokeStore.getInstanceAsync()
 First, get an instance of the InvokeStore:
 ```typescript
-const invokeStore = await InvokeStore.getInstance();
+const invokeStore = await InvokeStore.getInstanceAsync();
 ```
 
 ### invokeStore.getContext()

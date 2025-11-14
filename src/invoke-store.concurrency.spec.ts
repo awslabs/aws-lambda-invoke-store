@@ -7,7 +7,7 @@ describe("InvokeStore", async () => {
   beforeEach(async () => {
     vi.stubEnv("AWS_LAMBDA_MAX_CONCURRENCY", "2");
     vi.useFakeTimers();
-    invokeStore = await InvokeStore.getInstance();
+    invokeStore = await InvokeStore.getInstanceAsync();
   });
 
   afterEach(() => {

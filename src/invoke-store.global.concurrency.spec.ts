@@ -29,7 +29,7 @@ describe("InvokeStore Global Singleton", () => {
   beforeEach(async () => {
     vi.stubEnv("AWS_LAMBDA_MAX_CONCURRENCY", "2");
     process.env = { ...originalEnv };
-    invokeStore = await OriginalImport.getInstance();
+    invokeStore = await OriginalImport.getInstanceAsync();
   });
 
   it("should maintain singleton behavior with dynamic imports", async () => {
@@ -50,7 +50,7 @@ describe("InvokeStore Global Singleton", () => {
 
         // Dynamically import the module again
         const dynamicModule = await import("./invoke-store.js");
-        const dynamicImport = await dynamicModule.InvokeStore.getInstance();
+        const dynamicImport = await dynamicModule.InvokeStore.getInstanceAsync();
 
         // THEN - Dynamically imported instance should see the same context
         expect(dynamicImport).toBe(invokeStore); // Same instance

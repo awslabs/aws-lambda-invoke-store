@@ -10,7 +10,7 @@ describe("InvokeStore timer functions context preservation", async () => {
 
   beforeEach(async () => {
     vi.stubEnv("AWS_LAMBDA_MAX_CONCURRENCY", "2");
-    invokeStore = await InvokeStore.getInstance();
+    invokeStore = await InvokeStore.getInstanceAsync();
   });
 
   const delay = (ms: number) =>
