@@ -9,9 +9,9 @@ const PROTECTED_KEYS = {
   TENANT_ID: Symbol.for("_AWS_LAMBDA_TENANT_ID"),
 } as const;
 
-const NO_GLOBAL_AWS_LAMBDA =
-  process.env["AWS_LAMBDA_NODEJS_NO_GLOBAL_AWSLAMBDA"] === "1" ||
-  process.env["AWS_LAMBDA_NODEJS_NO_GLOBAL_AWSLAMBDA"] === "true";
+const NO_GLOBAL_AWS_LAMBDA = ["true", "1"].includes(
+  process.env?.AWS_LAMBDA_NODEJS_NO_GLOBAL_AWSLAMBDA ?? "",
+);
 
 declare global {
   var awslambda: {
