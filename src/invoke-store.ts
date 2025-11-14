@@ -46,7 +46,7 @@ export abstract class InvokeStoreBase {
     return Object.values(PROTECTED_KEYS).includes(key as symbol);
   }
 
-  getRequestId(): string | undefined {
+  getRequestId(): string {
     return this.get<string>(PROTECTED_KEYS.REQUEST_ID) ?? "-";
   }
 
