@@ -4,9 +4,9 @@ interface Context {
 }
 
 const PROTECTED_KEYS = {
-  REQUEST_ID: Symbol("_AWS_LAMBDA_REQUEST_ID"),
-  X_RAY_TRACE_ID: Symbol("_AWS_LAMBDA_X_RAY_TRACE_ID"),
-  TENANT_ID: Symbol("_AWS_LAMBDA_TENANT_ID"),
+  REQUEST_ID: Symbol.for("_AWS_LAMBDA_REQUEST_ID"),
+  X_RAY_TRACE_ID: Symbol.for("_AWS_LAMBDA_X_RAY_TRACE_ID"),
+  TENANT_ID: Symbol.for("_AWS_LAMBDA_TENANT_ID"),
 } as const;
 
 const NO_GLOBAL_AWS_LAMBDA =
