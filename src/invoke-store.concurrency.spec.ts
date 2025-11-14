@@ -2,7 +2,6 @@ import { describe, it, expect, afterEach, beforeEach, vi } from "vitest";
 import { InvokeStore, InvokeStoreBase } from "./invoke-store.js";
 
 describe("InvokeStore", async () => {
-
   let invokeStore: InvokeStoreBase;
 
   beforeEach(async () => {
@@ -16,7 +15,6 @@ describe("InvokeStore", async () => {
   });
 
   describe("run", () => {
-
     it("should handle nested runs with different IDs", async () => {
       // GIVEN
       const traces: string[] = [];

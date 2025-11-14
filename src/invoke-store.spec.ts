@@ -2,13 +2,13 @@ import { describe, it, expect, afterEach, beforeEach, vi } from "vitest";
 import { InvokeStoreBase, InvokeStore } from "./invoke-store.js";
 
 describe.each([
-  { label: 'multi-concurrency', isMultiConcurrent: true },
-  { label: 'single-concurrency', isMultiConcurrent: false }
-])('InvokeStore with %s', async ({ isMultiConcurrent }) => {
+  { label: "multi-concurrency", isMultiConcurrent: true },
+  { label: "single-concurrency", isMultiConcurrent: false },
+])("InvokeStore with %s", async ({ isMultiConcurrent }) => {
   describe("InvokeStore", async () => {
     let invokeStore: InvokeStoreBase;
     beforeEach(() => {
-      if(isMultiConcurrent) {
+      if (isMultiConcurrent) {
         vi.stubEnv("AWS_LAMBDA_MAX_CONCURRENCY", "2");
       }
       vi.useFakeTimers();
@@ -209,7 +209,7 @@ describe.each([
     describe("edge cases", () => {
       it("should handle synchronous functions", () => {
         // WHEN
-        console.log(InvokeStore)
+        console.log(InvokeStore);
         const result = invokeStore.run(
           {
             [invokeStore.PROTECTED_KEYS.REQUEST_ID]: "test-id",

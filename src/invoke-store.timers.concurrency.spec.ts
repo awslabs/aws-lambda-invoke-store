@@ -7,11 +7,11 @@ import { InvokeStore, InvokeStoreBase } from "./invoke-store.js";
  */
 describe("InvokeStore timer functions context preservation", async () => {
   let invokeStore: InvokeStoreBase;
-  
-   beforeEach(async () => {
+
+  beforeEach(async () => {
     vi.stubEnv("AWS_LAMBDA_MAX_CONCURRENCY", "2");
     invokeStore = await InvokeStore.getInstance();
-   });
+  });
 
   const delay = (ms: number) =>
     new Promise((resolve) => setTimeout(resolve, ms));

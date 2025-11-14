@@ -10,7 +10,6 @@ const PROTECTED_KEYS = {
 } as const;
 
 const NO_GLOBAL_AWS_LAMBDA =
-
   process.env["AWS_LAMBDA_NODEJS_NO_GLOBAL_AWSLAMBDA"] === "1" ||
   process.env["AWS_LAMBDA_NODEJS_NO_GLOBAL_AWSLAMBDA"] === "true";
 
@@ -28,10 +27,10 @@ if (!NO_GLOBAL_AWS_LAMBDA) {
 /**
  * Base class for AWS Lambda context storage implementations.
  * Provides core functionality for managing Lambda execution context.
- * 
- * Implementations handle either single-context (InvokeStoreSingle) or 
+ *
+ * Implementations handle either single-context (InvokeStoreSingle) or
  * multi-context (InvokeStoreMulti) scenarios based on Lambda's execution environment.
- * 
+ *
  * @public
  */
 export abstract class InvokeStoreBase {
@@ -81,7 +80,9 @@ class InvokeStoreSingle extends InvokeStoreBase {
 
   set<T = unknown>(key: string | symbol, value: T): void {
     if (this.isProtectedKey(key)) {
-      throw new Error(`Cannot modify protected Lambda context field: ${String(key)}`);
+      throw new Error(
+        `Cannot modify protected Lambda context field: ${String(key)}`,
+      );
     }
 
     this.currentContext = this.currentContext || {};
@@ -115,7 +116,7 @@ class InvokeStoreMulti extends InvokeStoreBase {
 
   static async create(): Promise<InvokeStoreMulti> {
     const instance = new InvokeStoreMulti();
-    const asyncHooks = await import('node:async_hooks');
+    const asyncHooks = await import("node:async_hooks");
     instance.als = new asyncHooks.AsyncLocalStorage<Context>();
     return instance;
   }
@@ -134,14 +135,16 @@ class InvokeStoreMulti extends InvokeStoreBase {
 
   set<T = unknown>(key: string | symbol, value: T): void {
     if (this.isProtectedKey(key)) {
-      throw new Error(`Cannot modify protected Lambda context field: ${String(key)}`);
+      throw new Error(
+        `Cannot modify protected Lambda context field: ${String(key)}`,
+      );
     }
 
     const store = this.als.getStore();
     if (!store) {
-      throw new Error('No context available');
+      throw new Error("No context available");
     }
-    
+
     store[key] = value;
   }
 
@@ -157,7 +160,7 @@ interface InvokeStoreConfig {
 /**
  * Provides access to AWS Lambda execution context storage.
  * Supports both single-context and multi-context environments through different implementations.
- * 
+ *
  * The store manages protected Lambda context fields and allows storing/retrieving custom values
  * within the execution context.
  * @public
@@ -170,10 +173,10 @@ export namespace InvokeStore {
       return instance;
     }
 
-    const isMulti = 'AWS_LAMBDA_MAX_CONCURRENCY' in (process.env);
-    
-    const newInstance = isMulti 
-      ? await InvokeStoreMulti.create() 
+    const isMulti = "AWS_LAMBDA_MAX_CONCURRENCY" in process.env;
+
+    const newInstance = isMulti
+      ? await InvokeStoreMulti.create()
       : new InvokeStoreSingle();
 
     if (!NO_GLOBAL_AWS_LAMBDA && globalThis.awslambda?.InvokeStore) {

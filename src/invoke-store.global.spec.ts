@@ -7,14 +7,16 @@ import {
   beforeEach,
   vi,
 } from "vitest";
-import { InvokeStoreBase, InvokeStore, InvokeStore as OriginalImport } from "./invoke-store.js";
-
+import {
+  InvokeStoreBase,
+  InvokeStore,
+  InvokeStore as OriginalImport,
+} from "./invoke-store.js";
 
 describe.each([
-  { label: 'multi-concurrency', isMultiConcurrent: true },
-  { label: 'single-concurrency', isMultiConcurrent: false  }
-])('InvokeStore with %s', async ({ isMultiConcurrent }) => {
-
+  { label: "multi-concurrency", isMultiConcurrent: true },
+  { label: "single-concurrency", isMultiConcurrent: false },
+])("InvokeStore with %s", async ({ isMultiConcurrent }) => {
   let invokeStore: InvokeStoreBase;
 
   describe("InvokeStore Global Singleton", () => {
@@ -30,8 +32,8 @@ describe.each([
       process.env = originalEnv;
     });
 
-    beforeEach(async() => {
-      if(isMultiConcurrent) {
+    beforeEach(async () => {
+      if (isMultiConcurrent) {
         vi.stubEnv("AWS_LAMBDA_MAX_CONCURRENCY", "2");
       }
       process.env = { ...originalEnv };
@@ -41,7 +43,9 @@ describe.each([
     it("should store the instance in globalThis.awslambda", async () => {
       // THEN
       expect(globalThis.awslambda.InvokeStore).toBeDefined();
-      expect(await globalThis.awslambda.InvokeStore).toBe(await OriginalImport.getInstance());
+      expect(await globalThis.awslambda.InvokeStore).toBe(
+        await OriginalImport.getInstance(),
+      );
     });
 
     it("should share context between original import and global reference", async () => {
@@ -54,7 +58,7 @@ describe.each([
 
       // WHEN - Use the original import to set up context
       await originalImport.run(
-        { [ originalImport.PROTECTED_KEYS.REQUEST_ID]: testRequestId },
+        { [originalImport.PROTECTED_KEYS.REQUEST_ID]: testRequestId },
         async () => {
           originalImport.set(testKey, testValue);
 
@@ -62,7 +66,7 @@ describe.each([
           const globalInstance = globalThis.awslambda.InvokeStore!;
           expect(globalInstance.getRequestId()).toBe(testRequestId);
           expect(globalInstance.get(testKey)).toBe(testValue);
-        }
+        },
       );
     });
 
@@ -83,7 +87,7 @@ describe.each([
           // THEN - Original import should see the same context
           expect(originalImport.getRequestId()).toBe(testRequestId);
           expect(originalImport.get(testKey)).toBe(testValue);
-        }
+        },
       );
     });
   });
@@ -123,7 +127,9 @@ describe.each([
       globalThis.awslambda.InvokeStore = mockInstance;
 
       // WHEN
-      const { InvokeStore: ReimportedStore } = await import("./invoke-store.js");
+      const { InvokeStore: ReimportedStore } = await import(
+        "./invoke-store.js"
+      );
       const awaitedReimportedStore = await ReimportedStore.getInstance();
 
       // THEN
@@ -163,7 +169,7 @@ describe.each([
         { [invokeStore.PROTECTED_KEYS.REQUEST_ID]: "test-id" },
         () => {
           requestId = invokeStore.getRequestId();
-        }
+        },
       );
       expect(requestId).toBe("test-id");
     });
@@ -184,7 +190,7 @@ describe.each([
         { [invokeStore.PROTECTED_KEYS.REQUEST_ID]: "test-id" },
         () => {
           requestId = invokeStore.getRequestId();
-        }
+        },
       );
       expect(requestId).toBe("test-id");
     });

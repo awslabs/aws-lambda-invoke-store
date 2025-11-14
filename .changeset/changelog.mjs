@@ -14,7 +14,7 @@ export const getDependencyReleaseLine = (changesets, dependenciesUpdated) => {
     .join(", ")}]:`;
 
   const updatedDepsList = dependenciesUpdated.map(
-    (dependency) => `  - ${dependency.name}@${dependency.newVersion}`
+    (dependency) => `  - ${dependency.name}@${dependency.newVersion}`,
   );
 
   return [changesetLink, ...updatedDepsList].join("\n");
@@ -22,7 +22,9 @@ export const getDependencyReleaseLine = (changesets, dependenciesUpdated) => {
 
 export const getReleaseLine = (changeset, _type) => {
   const { commit, summary } = changeset;
-  const [firstLine, ...futureLines] = summary.split("\n").map((l) => l.trimRight());
+  const [firstLine, ...futureLines] = summary
+    .split("\n")
+    .map((l) => l.trimRight());
 
   return `- ${firstLine} (${getGithubCommitWithLink(commit)})${
     futureLines.length > 0 ? futureLines.map((l) => `  ${l}`).join("\n") : ""

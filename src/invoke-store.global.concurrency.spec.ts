@@ -7,7 +7,10 @@ import {
   beforeEach,
   vi,
 } from "vitest";
-import { InvokeStoreBase, InvokeStore as OriginalImport } from "./invoke-store.js";
+import {
+  InvokeStoreBase,
+  InvokeStore as OriginalImport,
+} from "./invoke-store.js";
 
 describe("InvokeStore Global Singleton", () => {
   const originalGlobalAwsLambda = globalThis.awslambda;
@@ -62,7 +65,7 @@ describe("InvokeStore Global Singleton", () => {
 
         // THEN - Original import should see the new value
         expect(invokeStore.get(newKey)).toBe(newValue);
-      }
+      },
     );
   });
 });
