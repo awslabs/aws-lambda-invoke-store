@@ -107,10 +107,6 @@ class InvokeStoreSingle extends InvokeStoreBase {
 class InvokeStoreMulti extends InvokeStoreBase {
   private als!: import("node:async_hooks").AsyncLocalStorage<Context>;
 
-  constructor() {
-    super();
-  }
-
   static async create(): Promise<InvokeStoreMulti> {
     const instance = new InvokeStoreMulti();
     const asyncHooks = await import("node:async_hooks");
