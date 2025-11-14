@@ -7,14 +7,15 @@ import {
   beforeEach,
   vi,
 } from "vitest";
-import { InvokeStore, InvokeStore as OriginalImport } from "./invoke-store.js";
+import { InvokeStoreBase, InvokeStore, InvokeStore as OriginalImport } from "./invoke-store.js";
 
 
 describe.each([
-  { label: 'multi-concurrency', config: { env: { AWS_LAMBDA_MAX_CONCURRENCY: '10' } } },
-  { label: 'single-concurrency', config: undefined }
-])('InvokeStore with %s', async ({ config }) => {
-  const invokeStore = await InvokeStore.getInstance(config);
+  { label: 'multi-concurrency', isMultiConcurrent: true },
+  { label: 'single-concurrency', isMultiConcurrent: false  }
+])('InvokeStore with %s', async ({ isMultiConcurrent }) => {
+
+  let invokeStore: InvokeStoreBase;
 
   describe("InvokeStore Global Singleton", () => {
     const originalGlobalAwsLambda = globalThis.awslambda;
@@ -29,8 +30,12 @@ describe.each([
       process.env = originalEnv;
     });
 
-    beforeEach(() => {
+    beforeEach(async() => {
+      if(isMultiConcurrent) {
+        vi.stubEnv("AWS_LAMBDA_MAX_CONCURRENCY", "2");
+      }
       process.env = { ...originalEnv };
+      invokeStore = await InvokeStore.getInstance();
     });
 
     it("should store the instance in globalThis.awslambda", async () => {

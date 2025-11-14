@@ -32,9 +32,7 @@
     "build": "yarn clean && yarn build:types && node ./scripts/build-rollup.js",
     "build:types": "tsc -p tsconfig.types.json",
     "clean": "rm -rf dist-types dist-cjs dist-es",
-    "testMulticoncurrency": "AWS_LAMBDA_MAX_CONCURRENCY=2 vitest run src/*.multiconcurrency.spec.ts --reporter verbose",
-    "testOnDemand": "vitest run src/*.spec.ts --exclude \"src/*.multiconcurrency.spec.ts\" --reporter verbose",
-    "test": "yarn testOnDemand && yarn testMulticoncurrency",
+    "test": "vitest run --reporter verbose",
     "test:watch": "vitest watch",
     "release": "yarn build && changeset publish"
   },

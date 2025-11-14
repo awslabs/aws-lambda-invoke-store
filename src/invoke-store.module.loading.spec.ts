@@ -3,10 +3,7 @@ import { InvokeStore } from "./invoke-store.js"
 
 describe('InvokeStore implementations', () => {
   it('should load the correct class', async () => {
-    const singleStore = await InvokeStore.getInstance({
-      env: {}
-    });
-    
+    const singleStore = await InvokeStore.getInstance();
     expect(singleStore.constructor.name).toBe('InvokeStoreSingle');
   });
 });

@@ -7,12 +7,12 @@ import {
   beforeEach,
   vi,
 } from "vitest";
-import { InvokeStore as OriginalImport } from "./invoke-store.js";
-
+import { InvokeStoreBase, InvokeStore as OriginalImport } from "./invoke-store.js";
 
 describe("InvokeStore Global Singleton", () => {
   const originalGlobalAwsLambda = globalThis.awslambda;
   const originalEnv = process.env;
+  let invokeStore: InvokeStoreBase;
 
   beforeAll(() => {
     globalThis.awslambda = originalGlobalAwsLambda;
@@ -23,8 +23,10 @@ describe("InvokeStore Global Singleton", () => {
     process.env = originalEnv;
   });
 
-  beforeEach(() => {
+  beforeEach(async () => {
+    vi.stubEnv("AWS_LAMBDA_MAX_CONCURRENCY", "2");
     process.env = { ...originalEnv };
+    invokeStore = await OriginalImport.getInstance();
   });
 
   it("should maintain singleton behavior with dynamic imports", async () => {
@@ -34,23 +36,21 @@ describe("InvokeStore Global Singleton", () => {
     const testKey = "dynamic-key";
     const testValue = "dynamic-value";
 
-    const originalImportAwaited = await OriginalImport.getInstance();
-
     // WHEN - Set up context with original import
-    await originalImportAwaited.run(
+    await invokeStore.run(
       {
-        [originalImportAwaited.PROTECTED_KEYS.REQUEST_ID]: testRequestId,
-        [originalImportAwaited.PROTECTED_KEYS.TENANT_ID]: testTenantId,
+        [invokeStore.PROTECTED_KEYS.REQUEST_ID]: testRequestId,
+        [invokeStore.PROTECTED_KEYS.TENANT_ID]: testTenantId,
       },
       async () => {
-        originalImportAwaited.set(testKey, testValue);
+        invokeStore.set(testKey, testValue);
 
         // Dynamically import the module again
         const dynamicModule = await import("./invoke-store.js");
         const DynamicImport = await dynamicModule.InvokeStore.getInstance();
 
         // THEN - Dynamically imported instance should see the same context
-        expect(DynamicImport).toBe(originalImportAwaited); // Same instance
+        expect(DynamicImport).toBe(invokeStore); // Same instance
         expect(DynamicImport.getRequestId()).toBe(testRequestId);
         expect(DynamicImport.getTenantId()).toBe(testTenantId);
         expect(DynamicImport.get(testKey)).toBe(testValue);
@@ -61,7 +61,7 @@ describe("InvokeStore Global Singleton", () => {
         DynamicImport.set(newKey, newValue);
 
         // THEN - Original import should see the new value
-        expect(originalImportAwaited.get(newKey)).toBe(newValue);
+        expect(invokeStore.get(newKey)).toBe(newValue);
       }
     );
   });

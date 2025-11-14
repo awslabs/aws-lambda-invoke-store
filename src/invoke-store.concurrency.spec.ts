@@ -1,12 +1,14 @@
 import { describe, it, expect, afterEach, beforeEach, vi } from "vitest";
-import { InvokeStore } from "./invoke-store.js";
+import { InvokeStore, InvokeStoreBase } from "./invoke-store.js";
 
 describe("InvokeStore", async () => {
 
-  const invokeStore = await InvokeStore.getInstance();
+  let invokeStore: InvokeStoreBase;
 
-  beforeEach(() => {
+  beforeEach(async () => {
+    vi.stubEnv("AWS_LAMBDA_MAX_CONCURRENCY", "2");
     vi.useFakeTimers();
+    invokeStore = await InvokeStore.getInstance();
   });
 
   afterEach(() => {

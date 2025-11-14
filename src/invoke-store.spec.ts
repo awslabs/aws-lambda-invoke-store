@@ -1,19 +1,24 @@
 import { describe, it, expect, afterEach, beforeEach, vi } from "vitest";
-import { InvokeStore } from "./invoke-store.js";
+import { InvokeStoreBase, InvokeStore } from "./invoke-store.js";
 
 describe.each([
-  { label: 'multi-concurrency', config: { env: { AWS_LAMBDA_MAX_CONCURRENCY: '10' } } },
-  { label: 'single-concurrency', config: undefined }
-])('InvokeStore with %s', async ({ config }) => {
-  const invokeStore = await InvokeStore.getInstance(config);
-  describe("InvokeStore", () => {
+  { label: 'multi-concurrency', isMultiConcurrent: true },
+  { label: 'single-concurrency', isMultiConcurrent: false }
+])('InvokeStore with %s', async ({ isMultiConcurrent }) => {
+  describe("InvokeStore", async () => {
+    let invokeStore: InvokeStoreBase;
     beforeEach(() => {
+      if(isMultiConcurrent) {
+        vi.stubEnv("AWS_LAMBDA_MAX_CONCURRENCY", "2");
+      }
       vi.useFakeTimers();
     });
 
     afterEach(() => {
       vi.useRealTimers();
     });
+
+    invokeStore = await InvokeStore.getInstance();
 
     describe("getRequestId and getXRayTraceId", () => {
       it("should return placeholder when called outside run context", () => {

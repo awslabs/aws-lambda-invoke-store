@@ -1,14 +1,17 @@
-import { describe, it, expect } from "vitest";
-import { InvokeStore } from "./invoke-store.js";
+import { describe, beforeEach, vi, it, expect } from "vitest";
+import { InvokeStore, InvokeStoreBase } from "./invoke-store.js";
 
 /**
  * These tests specifically verify context preservation across various
  * timer and async APIs without using fake timers.
  */
 describe("InvokeStore timer functions context preservation", async () => {
-  const invokeStore = await InvokeStore.getInstance({ 
-    env: { AWS_LAMBDA_MAX_CONCURRENCY: '10' } 
-  });
+  let invokeStore: InvokeStoreBase;
+  
+   beforeEach(async () => {
+    vi.stubEnv("AWS_LAMBDA_MAX_CONCURRENCY", "2");
+    invokeStore = await InvokeStore.getInstance();
+   });
 
   const delay = (ms: number) =>
     new Promise((resolve) => setTimeout(resolve, ms));

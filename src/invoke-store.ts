@@ -165,13 +165,12 @@ interface InvokeStoreConfig {
 export namespace InvokeStore {
   let instance: InvokeStoreBase | null = null;
 
-  export async function getInstance(storeConfig?: InvokeStoreConfig): Promise<InvokeStoreBase> {
+  export async function getInstance(): Promise<InvokeStoreBase> {
     if (instance) {
       return instance;
     }
 
-    const env = storeConfig?.env ?? process.env;
-    const isMulti = 'AWS_LAMBDA_MAX_CONCURRENCY' in (env ?? {});
+    const isMulti = 'AWS_LAMBDA_MAX_CONCURRENCY' in (process.env);
     
     const newInstance = isMulti 
       ? await InvokeStoreMulti.create() 
