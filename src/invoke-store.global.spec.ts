@@ -58,7 +58,7 @@ describe.each([
 
       // WHEN - Use the original import to set up context
       await originalImport.run(
-        { [originalImport.PROTECTED_KEYS.REQUEST_ID]: testRequestId },
+        { [InvokeStoreBase.PROTECTED_KEYS.REQUEST_ID]: testRequestId },
         async () => {
           originalImport.set(testKey, testValue);
 
@@ -80,7 +80,7 @@ describe.each([
 
       // WHEN - Set context using global reference
       await globalInstance.run(
-        { [originalImport.PROTECTED_KEYS.REQUEST_ID]: testRequestId },
+        { [InvokeStoreBase.PROTECTED_KEYS.REQUEST_ID]: testRequestId },
         async () => {
           globalInstance.set(testKey, testValue);
 
@@ -166,7 +166,7 @@ describe.each([
 
       let requestId: string | undefined;
       await invokeStore.run(
-        { [invokeStore.PROTECTED_KEYS.REQUEST_ID]: "test-id" },
+        { [InvokeStoreBase.PROTECTED_KEYS.REQUEST_ID]: "test-id" },
         () => {
           requestId = invokeStore.getRequestId();
         },
@@ -187,7 +187,7 @@ describe.each([
 
       let requestId: string | undefined;
       await invokeStore.run(
-        { [invokeStore.PROTECTED_KEYS.REQUEST_ID]: "test-id" },
+        { [InvokeStoreBase.PROTECTED_KEYS.REQUEST_ID]: "test-id" },
         () => {
           requestId = invokeStore.getRequestId();
         },

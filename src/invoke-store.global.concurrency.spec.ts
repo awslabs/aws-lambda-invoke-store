@@ -42,8 +42,8 @@ describe("InvokeStore Global Singleton", () => {
     // WHEN - Set up context with original import
     await invokeStore.run(
       {
-        [invokeStore.PROTECTED_KEYS.REQUEST_ID]: testRequestId,
-        [invokeStore.PROTECTED_KEYS.TENANT_ID]: testTenantId,
+        [InvokeStoreBase.PROTECTED_KEYS.REQUEST_ID]: testRequestId,
+        [InvokeStoreBase.PROTECTED_KEYS.TENANT_ID]: testTenantId,
       },
       async () => {
         invokeStore.set(testKey, testValue);

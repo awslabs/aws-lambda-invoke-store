@@ -25,7 +25,7 @@ describe("InvokeStore timer functions context preservation", async () => {
       // WHEN
       await invokeStore.run(
         {
-          [invokeStore.PROTECTED_KEYS.REQUEST_ID]: testRequestId,
+          [InvokeStoreBase.PROTECTED_KEYS.REQUEST_ID]: testRequestId,
         },
         async () => {
           traces.push(`before-${invokeStore.getRequestId()}`);
@@ -57,7 +57,7 @@ describe("InvokeStore timer functions context preservation", async () => {
       // WHEN
       await invokeStore.run(
         {
-          [invokeStore.PROTECTED_KEYS.REQUEST_ID]: testRequestId,
+          [InvokeStoreBase.PROTECTED_KEYS.REQUEST_ID]: testRequestId,
         },
         async () => {
           traces.push(`level-0-${invokeStore.getRequestId()}`);
@@ -96,7 +96,7 @@ describe("InvokeStore timer functions context preservation", async () => {
       // WHEN
       await invokeStore.run(
         {
-          [invokeStore.PROTECTED_KEYS.REQUEST_ID]: testRequestId,
+          [InvokeStoreBase.PROTECTED_KEYS.REQUEST_ID]: testRequestId,
         },
         async () => {
           traces.push(`before-${invokeStore.getRequestId()}`);
@@ -128,7 +128,7 @@ describe("InvokeStore timer functions context preservation", async () => {
       // WHEN
       await invokeStore.run(
         {
-          [invokeStore.PROTECTED_KEYS.REQUEST_ID]: testRequestId,
+          [InvokeStoreBase.PROTECTED_KEYS.REQUEST_ID]: testRequestId,
         },
         async () => {
           traces.push(`level-0-${invokeStore.getRequestId()}`);
@@ -167,7 +167,7 @@ describe("InvokeStore timer functions context preservation", async () => {
       // WHEN
       await invokeStore.run(
         {
-          [invokeStore.PROTECTED_KEYS.REQUEST_ID]: testRequestId,
+          [InvokeStoreBase.PROTECTED_KEYS.REQUEST_ID]: testRequestId,
         },
         async () => {
           traces.push(`before-${invokeStore.getRequestId()}`);
@@ -199,7 +199,7 @@ describe("InvokeStore timer functions context preservation", async () => {
       // WHEN
       await invokeStore.run(
         {
-          [invokeStore.PROTECTED_KEYS.REQUEST_ID]: testRequestId,
+          [InvokeStoreBase.PROTECTED_KEYS.REQUEST_ID]: testRequestId,
         },
         async () => {
           traces.push(`level-0-${invokeStore.getRequestId()}`);
@@ -238,7 +238,7 @@ describe("InvokeStore timer functions context preservation", async () => {
       // WHEN
       await invokeStore.run(
         {
-          [invokeStore.PROTECTED_KEYS.REQUEST_ID]: testRequestId,
+          [InvokeStoreBase.PROTECTED_KEYS.REQUEST_ID]: testRequestId,
         },
         async () => {
           traces.push(`before-${invokeStore.getRequestId()}`);
@@ -267,7 +267,7 @@ describe("InvokeStore timer functions context preservation", async () => {
       // WHEN
       await invokeStore.run(
         {
-          [invokeStore.PROTECTED_KEYS.REQUEST_ID]: testRequestId,
+          [InvokeStoreBase.PROTECTED_KEYS.REQUEST_ID]: testRequestId,
         },
         async () => {
           traces.push(`start-${invokeStore.getRequestId()}`);
@@ -309,7 +309,7 @@ describe("InvokeStore timer functions context preservation", async () => {
       // WHEN
       await invokeStore.run(
         {
-          [invokeStore.PROTECTED_KEYS.REQUEST_ID]: testRequestId,
+          [InvokeStoreBase.PROTECTED_KEYS.REQUEST_ID]: testRequestId,
         },
         async () => {
           traces.push(`start-${invokeStore.getRequestId()}`);
@@ -370,8 +370,8 @@ describe("InvokeStore timer functions context preservation", async () => {
       await Promise.all([
         invokeStore.run(
           {
-            [invokeStore.PROTECTED_KEYS.REQUEST_ID]: "request-1",
-            [invokeStore.PROTECTED_KEYS.X_RAY_TRACE_ID]: "trace-1",
+            [InvokeStoreBase.PROTECTED_KEYS.REQUEST_ID]: "request-1",
+            [InvokeStoreBase.PROTECTED_KEYS.X_RAY_TRACE_ID]: "trace-1",
           },
           async () => {
             traces.push(`start-1-${invokeStore.getRequestId()}`);
@@ -381,8 +381,8 @@ describe("InvokeStore timer functions context preservation", async () => {
         ),
         invokeStore.run(
           {
-            [invokeStore.PROTECTED_KEYS.REQUEST_ID]: "request-2",
-            [invokeStore.PROTECTED_KEYS.X_RAY_TRACE_ID]: "trace-2",
+            [InvokeStoreBase.PROTECTED_KEYS.REQUEST_ID]: "request-2",
+            [InvokeStoreBase.PROTECTED_KEYS.X_RAY_TRACE_ID]: "trace-2",
           },
           async () => {
             traces.push(`start-2-${invokeStore.getRequestId()}`);
@@ -409,7 +409,7 @@ describe("InvokeStore timer functions context preservation", async () => {
       await Promise.all([
         invokeStore.run(
           {
-            [invokeStore.PROTECTED_KEYS.REQUEST_ID]: "request-1",
+            [InvokeStoreBase.PROTECTED_KEYS.REQUEST_ID]: "request-1",
           },
           async () => {
             traces.push(`start-1-${invokeStore.getRequestId()}`);
@@ -427,7 +427,7 @@ describe("InvokeStore timer functions context preservation", async () => {
         ),
         invokeStore.run(
           {
-            [invokeStore.PROTECTED_KEYS.REQUEST_ID]: "request-2",
+            [InvokeStoreBase.PROTECTED_KEYS.REQUEST_ID]: "request-2",
           },
           async () => {
             traces.push(`start-2-${invokeStore.getRequestId()}`);
@@ -445,7 +445,7 @@ describe("InvokeStore timer functions context preservation", async () => {
         ),
         invokeStore.run(
           {
-            [invokeStore.PROTECTED_KEYS.REQUEST_ID]: "request-3",
+            [InvokeStoreBase.PROTECTED_KEYS.REQUEST_ID]: "request-3",
           },
           async () => {
             traces.push(`start-3-${invokeStore.getRequestId()}`);
@@ -513,7 +513,7 @@ describe("InvokeStore timer functions context preservation", async () => {
       // WHEN
       await invokeStore.run(
         {
-          [invokeStore.PROTECTED_KEYS.REQUEST_ID]: testRequestId,
+          [InvokeStoreBase.PROTECTED_KEYS.REQUEST_ID]: testRequestId,
         },
         async () => {
           traces.push(`start-${invokeStore.getRequestId()}`);
@@ -556,7 +556,7 @@ describe("InvokeStore timer functions context preservation", async () => {
       // WHEN
       await invokeStore.run(
         {
-          [invokeStore.PROTECTED_KEYS.REQUEST_ID]: testRequestId,
+          [InvokeStoreBase.PROTECTED_KEYS.REQUEST_ID]: testRequestId,
         },
         async () => {
           traces.push(`start-${invokeStore.getRequestId()}`);

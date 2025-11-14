@@ -22,13 +22,13 @@ describe("InvokeStore", async () => {
       // WHEN
       await invokeStore.run(
         {
-          [invokeStore.PROTECTED_KEYS.REQUEST_ID]: "outer",
+          [InvokeStoreBase.PROTECTED_KEYS.REQUEST_ID]: "outer",
         },
         async () => {
           traces.push(`outer-${invokeStore.getRequestId()}`);
           await invokeStore.run(
             {
-              [invokeStore.PROTECTED_KEYS.REQUEST_ID]: "inner",
+              [InvokeStoreBase.PROTECTED_KEYS.REQUEST_ID]: "inner",
             },
             async () => {
               traces.push(`inner-${invokeStore.getRequestId()}`);
@@ -54,8 +54,8 @@ describe("InvokeStore", async () => {
       const isolateTasks = Promise.all([
         invokeStore.run(
           {
-            [invokeStore.PROTECTED_KEYS.REQUEST_ID]: "request-1",
-            [invokeStore.PROTECTED_KEYS.X_RAY_TRACE_ID]: "trace-1",
+            [InvokeStoreBase.PROTECTED_KEYS.REQUEST_ID]: "request-1",
+            [InvokeStoreBase.PROTECTED_KEYS.X_RAY_TRACE_ID]: "trace-1",
           },
           async () => {
             traces.push(`start-1-${invokeStore.getRequestId()}`);
@@ -65,8 +65,8 @@ describe("InvokeStore", async () => {
         ),
         invokeStore.run(
           {
-            [invokeStore.PROTECTED_KEYS.REQUEST_ID]: "request-2",
-            [invokeStore.PROTECTED_KEYS.X_RAY_TRACE_ID]: "trace-2",
+            [InvokeStoreBase.PROTECTED_KEYS.REQUEST_ID]: "request-2",
+            [InvokeStoreBase.PROTECTED_KEYS.X_RAY_TRACE_ID]: "trace-2",
           },
           async () => {
             traces.push(`start-2-${invokeStore.getRequestId()}`);
@@ -94,7 +94,7 @@ describe("InvokeStore", async () => {
       // WHEN
       await invokeStore.run(
         {
-          [invokeStore.PROTECTED_KEYS.REQUEST_ID]: "request-1",
+          [InvokeStoreBase.PROTECTED_KEYS.REQUEST_ID]: "request-1",
         },
         async () => {
           traces.push(`before-${invokeStore.getRequestId()}`);

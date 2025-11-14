@@ -34,7 +34,7 @@ if (!NO_GLOBAL_AWS_LAMBDA) {
  * @public
  */
 export abstract class InvokeStoreBase {
-  public readonly PROTECTED_KEYS = PROTECTED_KEYS;
+  public static readonly PROTECTED_KEYS = PROTECTED_KEYS;
 
   abstract getContext(): Context | undefined;
   abstract hasContext(): boolean;

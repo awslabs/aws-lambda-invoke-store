@@ -83,7 +83,7 @@ const context = invokeStore.getContext();
 Gets a value from the current context.
 
 ```typescript
-const requestId = invokeStore.get(InvokeStore.PROTECTED_KEYS.REQUEST_ID);
+const requestId = invokeStore.get(InvokeStoreBase.PROTECTED_KEYS.REQUEST_ID);
 const customValue = invokeStore.get("customKey");
 ```
 
@@ -96,7 +96,7 @@ invokeStore.set("userId", "user-123");
 invokeStore.set("timestamp", Date.now());
 
 // This will throw an error:
-// invokeStore.set(invokeStore.PROTECTED_KEYS.REQUEST_ID, 'new-id');
+// invokeStore.set(InvokeStoreBase.PROTECTED_KEYS.REQUEST_ID, 'new-id');
 ```
 
 ### invokeStore.getRequestId()
@@ -142,8 +142,8 @@ Runs a function within an invoke context.
 ```typescript
 invokeStore.run(
   {
-    [invokeStore.PROTECTED_KEYS.REQUEST_ID]: "request-123",
-    [invokeStore.PROTECTED_KEYS.X_RAY_TRACE_ID]: "trace-456", // Optional X-Ray trace ID
+    [InvokeStoreBase.PROTECTED_KEYS.REQUEST_ID]: "request-123",
+    [InvokeStoreBase.PROTECTED_KEYS.X_RAY_TRACE_ID]: "trace-456", // Optional X-Ray trace ID
     customField: "value", // Optional custom fields
   },
   () => {

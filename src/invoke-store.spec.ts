@@ -35,8 +35,8 @@ describe.each([
         // WHEN
         const result = await invokeStore.run(
           {
-            [invokeStore.PROTECTED_KEYS.REQUEST_ID]: "test-id",
-            [invokeStore.PROTECTED_KEYS.X_RAY_TRACE_ID]: "trace-id",
+            [InvokeStoreBase.PROTECTED_KEYS.REQUEST_ID]: "test-id",
+            [InvokeStoreBase.PROTECTED_KEYS.X_RAY_TRACE_ID]: "trace-id",
           },
           () => {
             return {
@@ -57,7 +57,7 @@ describe.each([
         // WHEN
         const result = await invokeStore.run(
           {
-            [invokeStore.PROTECTED_KEYS.REQUEST_ID]: "test-id",
+            [InvokeStoreBase.PROTECTED_KEYS.REQUEST_ID]: "test-id",
             customProp: "initial-value",
           },
           () => {
@@ -78,16 +78,16 @@ describe.each([
         // WHEN & THEN
         await invokeStore.run(
           {
-            [invokeStore.PROTECTED_KEYS.REQUEST_ID]: "test-id",
+            [InvokeStoreBase.PROTECTED_KEYS.REQUEST_ID]: "test-id",
           },
           () => {
             expect(() => {
-              invokeStore.set(invokeStore.PROTECTED_KEYS.REQUEST_ID, "new-id");
+              invokeStore.set(InvokeStoreBase.PROTECTED_KEYS.REQUEST_ID, "new-id");
             }).toThrow(/Cannot modify protected Lambda context field/);
 
             expect(() => {
               invokeStore.set(
-                invokeStore.PROTECTED_KEYS.X_RAY_TRACE_ID,
+                InvokeStoreBase.PROTECTED_KEYS.X_RAY_TRACE_ID,
                 "new-trace",
               );
             }).toThrow(/Cannot modify protected Lambda context field/);
@@ -109,8 +109,8 @@ describe.each([
         // WHEN
         const context = await invokeStore.run(
           {
-            [invokeStore.PROTECTED_KEYS.REQUEST_ID]: "test-id",
-            [invokeStore.PROTECTED_KEYS.X_RAY_TRACE_ID]: "trace-id",
+            [InvokeStoreBase.PROTECTED_KEYS.REQUEST_ID]: "test-id",
+            [InvokeStoreBase.PROTECTED_KEYS.X_RAY_TRACE_ID]: "trace-id",
             customField: "custom-value",
           },
           () => {
@@ -121,8 +121,8 @@ describe.each([
 
         // THEN
         expect(context).toEqual({
-          [invokeStore.PROTECTED_KEYS.REQUEST_ID]: "test-id",
-          [invokeStore.PROTECTED_KEYS.X_RAY_TRACE_ID]: "trace-id",
+          [InvokeStoreBase.PROTECTED_KEYS.REQUEST_ID]: "test-id",
+          [InvokeStoreBase.PROTECTED_KEYS.X_RAY_TRACE_ID]: "trace-id",
           customField: "custom-value",
           dynamicField: "dynamic-value",
         });
@@ -142,7 +142,7 @@ describe.each([
         // WHEN
         const result = await invokeStore.run(
           {
-            [invokeStore.PROTECTED_KEYS.REQUEST_ID]: "test-id",
+            [InvokeStoreBase.PROTECTED_KEYS.REQUEST_ID]: "test-id",
           },
           () => {
             return invokeStore.hasContext();
@@ -162,7 +162,7 @@ describe.each([
         // WHEN
         const promise = invokeStore.run(
           {
-            [invokeStore.PROTECTED_KEYS.REQUEST_ID]: "test-id",
+            [InvokeStoreBase.PROTECTED_KEYS.REQUEST_ID]: "test-id",
           },
           async () => {
             throw error;
@@ -182,7 +182,7 @@ describe.each([
         await Promise.allSettled([
           invokeStore.run(
             {
-              [invokeStore.PROTECTED_KEYS.REQUEST_ID]: "success-id",
+              [InvokeStoreBase.PROTECTED_KEYS.REQUEST_ID]: "success-id",
             },
             async () => {
               traces.push(`success-${invokeStore.getRequestId()}`);
@@ -190,7 +190,7 @@ describe.each([
           ),
           invokeStore.run(
             {
-              [invokeStore.PROTECTED_KEYS.REQUEST_ID]: "error-id",
+              [InvokeStoreBase.PROTECTED_KEYS.REQUEST_ID]: "error-id",
             },
             async () => {
               traces.push(`before-error-${invokeStore.getRequestId()}`);
@@ -212,7 +212,7 @@ describe.each([
         console.log(InvokeStore);
         const result = invokeStore.run(
           {
-            [invokeStore.PROTECTED_KEYS.REQUEST_ID]: "test-id",
+            [InvokeStoreBase.PROTECTED_KEYS.REQUEST_ID]: "test-id",
           },
           () => {
             return invokeStore.getRequestId();
@@ -230,7 +230,7 @@ describe.each([
         // WHEN
         const promise = invokeStore.run(
           {
-            [invokeStore.PROTECTED_KEYS.REQUEST_ID]: "test-id",
+            [InvokeStoreBase.PROTECTED_KEYS.REQUEST_ID]: "test-id",
           },
           () => {
             return Promise.reject(error);
