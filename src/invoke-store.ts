@@ -1,126 +1,195 @@
-import { AsyncLocalStorage } from "async_hooks";
-
-// AWS_LAMBDA_NODEJS_NO_GLOBAL_AWSLAMBDA provides an escape hatch since we're modifying the global object which may not be expected to a customer's handler.
-const noGlobalAwsLambda =
-  process.env["AWS_LAMBDA_NODEJS_NO_GLOBAL_AWSLAMBDA"] === "1" ||
-  process.env["AWS_LAMBDA_NODEJS_NO_GLOBAL_AWSLAMBDA"] === "true";
-
-if (!noGlobalAwsLambda) {
-  globalThis.awslambda = globalThis.awslambda || {};
+import type { AsyncLocalStorage } from "node:async_hooks";
+interface Context {
+  [key: string]: unknown;
+  [key: symbol]: unknown;
 }
 
 const PROTECTED_KEYS = {
-  REQUEST_ID: Symbol("_AWS_LAMBDA_REQUEST_ID"),
-  X_RAY_TRACE_ID: Symbol("_AWS_LAMBDA_X_RAY_TRACE_ID"),
-  TENANT_ID: Symbol("_AWS_LAMBDA_TENANT_ID"),
+  REQUEST_ID: Symbol.for("_AWS_LAMBDA_REQUEST_ID"),
+  X_RAY_TRACE_ID: Symbol.for("_AWS_LAMBDA_X_RAY_TRACE_ID"),
+  TENANT_ID: Symbol.for("_AWS_LAMBDA_TENANT_ID"),
 } as const;
 
-/**
- * Generic store context that uses protected keys for Lambda fields
- * and allows custom user properties
- */
-export interface InvokeStoreContext {
-  [key: string | symbol]: unknown;
+const NO_GLOBAL_AWS_LAMBDA = ["true", "1"].includes(
+  process.env?.AWS_LAMBDA_NODEJS_NO_GLOBAL_AWSLAMBDA ?? "",
+);
+
+declare global {
+  var awslambda: {
+    InvokeStore?: InvokeStoreBase;
+    [key: string]: unknown;
+  };
+}
+
+if (!NO_GLOBAL_AWS_LAMBDA) {
+  globalThis.awslambda = globalThis.awslambda || {};
 }
 
 /**
- * InvokeStore implementation class
+ * Base class for AWS Lambda context storage implementations.
+ * Provides core functionality for managing Lambda execution context.
+ *
+ * Implementations handle either single-context (InvokeStoreSingle) or
+ * multi-context (InvokeStoreMulti) scenarios based on Lambda's execution environment.
+ *
+ * @public
  */
-class InvokeStoreImpl {
-  private static storage = new AsyncLocalStorage<InvokeStoreContext>();
-
-  // Protected keys for Lambda context fields
+export abstract class InvokeStoreBase {
   public static readonly PROTECTED_KEYS = PROTECTED_KEYS;
 
-  /**
-   * Initialize and run code within an invoke context
-   */
-  public static run<T>(
-    context: InvokeStoreContext,
-    fn: () => T | Promise<T>,
-  ): T | Promise<T> {
-    return this.storage.run({ ...context }, fn);
+  abstract getContext(): Context | undefined;
+  abstract hasContext(): boolean;
+  abstract get<T = unknown>(key: string | symbol): T | undefined;
+  abstract set<T = unknown>(key: string | symbol, value: T): void;
+  abstract run<T>(context: Context, fn: () => T): T;
+
+  protected isProtectedKey(key: string | symbol): boolean {
+    return Object.values(PROTECTED_KEYS).includes(key as symbol);
   }
 
-  /**
-   * Get the complete current context
-   */
-  public static getContext(): InvokeStoreContext | undefined {
-    return this.storage.getStore();
+  getRequestId(): string {
+    return this.get<string>(PROTECTED_KEYS.REQUEST_ID) ?? "-";
   }
 
-  /**
-   * Get a specific value from the context by key
-   */
-  public static get<T = unknown>(key: string | symbol): T | undefined {
-    const context = this.storage.getStore();
-    return context?.[key] as T | undefined;
+  getXRayTraceId(): string | undefined {
+    return this.get<string>(PROTECTED_KEYS.X_RAY_TRACE_ID);
   }
 
-  /**
-   * Set a custom value in the current context
-   * Protected Lambda context fields cannot be overwritten
-   */
-  public static set(key: string | symbol, value: unknown): void {
+  getTenantId(): string | undefined {
+    return this.get<string>(PROTECTED_KEYS.TENANT_ID);
+  }
+}
+
+/**
+ * Single Context Implementation
+ * @internal
+ */
+class InvokeStoreSingle extends InvokeStoreBase {
+  private currentContext?: Context;
+
+  getContext(): Context | undefined {
+    return this.currentContext;
+  }
+
+  hasContext(): boolean {
+    return this.currentContext !== undefined;
+  }
+
+  get<T = unknown>(key: string | symbol): T | undefined {
+    return this.currentContext?.[key] as T | undefined;
+  }
+
+  set<T = unknown>(key: string | symbol, value: T): void {
     if (this.isProtectedKey(key)) {
-      throw new Error(`Cannot modify protected Lambda context field`);
+      throw new Error(
+        `Cannot modify protected Lambda context field: ${String(key)}`,
+      );
     }
 
-    const context = this.storage.getStore();
-    if (context) {
-      context[key] = value;
+    this.currentContext = this.currentContext || {};
+    this.currentContext[key] = value;
+  }
+
+  run<T>(context: Context, fn: () => T): T {
+    this.currentContext = context;
+    try {
+      return fn();
+    } finally {
+      this.currentContext = undefined;
     }
-  }
-
-  /**
-   * Get the current request ID
-   */
-  public static getRequestId(): string {
-    return this.get<string>(this.PROTECTED_KEYS.REQUEST_ID) ?? "-";
-  }
-
-  /**
-   * Get the current X-ray trace ID
-   */
-  public static getXRayTraceId(): string | undefined {
-    return this.get<string>(this.PROTECTED_KEYS.X_RAY_TRACE_ID);
-  }
-
-  /**
-   * Get the current tenant ID
-   */
-  public static getTenantId(): string | undefined {
-    return this.get<string>(this.PROTECTED_KEYS.TENANT_ID);
-  }
-
-  /**
-   * Check if we're currently within an invoke context
-   */
-  public static hasContext(): boolean {
-    return this.storage.getStore() !== undefined;
-  }
-
-  /**
-   * Check if a key is protected (readonly Lambda context field)
-   */
-  private static isProtectedKey(key: string | symbol): boolean {
-    return (
-      key === this.PROTECTED_KEYS.REQUEST_ID ||
-      key === this.PROTECTED_KEYS.X_RAY_TRACE_ID
-    );
   }
 }
 
-let instance: typeof InvokeStoreImpl;
+/**
+ * Multi Context Implementation
+ * @internal
+ */
+class InvokeStoreMulti extends InvokeStoreBase {
+  private als!: AsyncLocalStorage<Context>;
 
-if (!noGlobalAwsLambda && globalThis.awslambda?.InvokeStore) {
-  instance = globalThis.awslambda.InvokeStore;
-} else {
-  instance = InvokeStoreImpl;
+  static async create(): Promise<InvokeStoreMulti> {
+    const instance = new InvokeStoreMulti();
+    const asyncHooks = await import("node:async_hooks");
+    instance.als = new asyncHooks.AsyncLocalStorage<Context>();
+    return instance;
+  }
 
-  if (!noGlobalAwsLambda && globalThis.awslambda) {
-    globalThis.awslambda.InvokeStore = instance;
+  getContext(): Context | undefined {
+    return this.als.getStore();
+  }
+
+  hasContext(): boolean {
+    return this.als.getStore() !== undefined;
+  }
+
+  get<T = unknown>(key: string | symbol): T | undefined {
+    return this.als.getStore()?.[key] as T | undefined;
+  }
+
+  set<T = unknown>(key: string | symbol, value: T): void {
+    if (this.isProtectedKey(key)) {
+      throw new Error(
+        `Cannot modify protected Lambda context field: ${String(key)}`,
+      );
+    }
+
+    const store = this.als.getStore();
+    if (!store) {
+      throw new Error("No context available");
+    }
+
+    store[key] = value;
+  }
+
+  run<T>(context: Context, fn: () => T): T {
+    return this.als.run(context, fn);
   }
 }
 
-export const InvokeStore = instance;
+/**
+ * Provides access to AWS Lambda execution context storage.
+ * Supports both single-context and multi-context environments through different implementations.
+ *
+ * The store manages protected Lambda context fields and allows storing/retrieving custom values
+ * within the execution context.
+ * @public
+ */
+export namespace InvokeStore {
+  let instance: Promise<InvokeStoreBase> | null = null;
+
+  export async function getInstanceAsync(): Promise<InvokeStoreBase> {
+    if (!instance) {
+      // Lock synchronously on first invoke by immediately assigning the promise
+      instance = (async () => {
+        const isMulti = "AWS_LAMBDA_MAX_CONCURRENCY" in process.env;
+        const newInstance = isMulti
+          ? await InvokeStoreMulti.create()
+          : new InvokeStoreSingle();
+
+        if (!NO_GLOBAL_AWS_LAMBDA && globalThis.awslambda?.InvokeStore) {
+          return globalThis.awslambda.InvokeStore;
+        } else if (!NO_GLOBAL_AWS_LAMBDA && globalThis.awslambda) {
+          globalThis.awslambda.InvokeStore = newInstance;
+          return newInstance;
+        } else {
+          return newInstance;
+        }
+      })();
+    }
+
+    return instance;
+  }
+
+  export const _testing =
+    process.env.AWS_LAMBDA_BENCHMARK_MODE === "1"
+      ? {
+          reset: () => {
+            instance = null;
+            if (globalThis.awslambda?.InvokeStore) {
+              delete globalThis.awslambda.InvokeStore;
+            }
+            globalThis.awslambda = {};
+          },
+        }
+      : undefined;
+}

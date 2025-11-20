@@ -1,5 +1,15 @@
 # @aws/lambda-invoke-store
 
+## 0.2.0
+
+### Minor Changes
+
+- Invoke Store is now accessible via `InvokeStore.getInstanceAsync()` instead of direct instantiation ([d14bda46410ff5e46777795f8ed4c6e8fcc90e7b](https://github.com/awslabs/aws-lambda-invoke-store/commit/d14bda46410ff5e46777795f8ed4c6e8fcc90e7b))
+  - Lazy loads `node:async_hooks` to improve startup performance
+  - Selects dynamic implementation based on Lambda environment:
+    - Single-context implementation for standard Lambda executions
+    - Multi-context implementation (using AsyncLocalStorage)
+
 ## 0.1.1
 
 ### Patch Changes

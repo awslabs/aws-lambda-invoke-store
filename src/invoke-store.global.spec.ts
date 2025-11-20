@@ -7,204 +7,192 @@ import {
   beforeEach,
   vi,
 } from "vitest";
-import { InvokeStore as OriginalImport } from "./invoke-store.js";
+import {
+  InvokeStoreBase,
+  InvokeStore,
+  InvokeStore as OriginalImport,
+} from "./invoke-store.js";
 
-describe("InvokeStore Global Singleton", () => {
-  const originalGlobalAwsLambda = globalThis.awslambda;
-  const originalEnv = process.env;
+describe.each([
+  { label: "multi-concurrency", isMultiConcurrent: true },
+  { label: "single-concurrency", isMultiConcurrent: false },
+])("InvokeStore with %s", async ({ isMultiConcurrent }) => {
+  let invokeStore: InvokeStoreBase;
 
-  beforeAll(() => {
-    globalThis.awslambda = originalGlobalAwsLambda;
-  });
+  describe("InvokeStore Global Singleton", () => {
+    const originalGlobalAwsLambda = globalThis.awslambda;
+    const originalEnv = process.env;
 
-  afterAll(() => {
-    delete (globalThis as any).awslambda;
-    process.env = originalEnv;
-  });
+    beforeAll(() => {
+      globalThis.awslambda = originalGlobalAwsLambda;
+    });
 
-  beforeEach(() => {
-    process.env = { ...originalEnv };
-  });
+    afterAll(() => {
+      delete (globalThis as any).awslambda;
+      process.env = originalEnv;
+    });
 
-  it("should store the instance in globalThis.awslambda", () => {
-    // THEN
-    expect(globalThis.awslambda.InvokeStore).toBeDefined();
-    expect(globalThis.awslambda.InvokeStore).toBe(OriginalImport);
-  });
-
-  it("should share context between original import and global reference", async () => {
-    // GIVEN
-    const testRequestId = "shared-context-test";
-    const testKey = "test-key";
-    const testValue = "test-value";
-
-    // WHEN - Use the original import to set up context
-    await OriginalImport.run(
-      { [OriginalImport.PROTECTED_KEYS.REQUEST_ID]: testRequestId },
-      () => {
-        OriginalImport.set(testKey, testValue);
-
-        // THEN - Global reference should see the same context
-        const globalInstance = globalThis.awslambda.InvokeStore!;
-        expect(globalInstance.getRequestId()).toBe(testRequestId);
-        expect(globalInstance.get(testKey)).toBe(testValue);
+    beforeEach(async () => {
+      if (isMultiConcurrent) {
+        vi.stubEnv("AWS_LAMBDA_MAX_CONCURRENCY", "2");
       }
-    );
+      process.env = { ...originalEnv };
+      invokeStore = await InvokeStore.getInstanceAsync();
+    });
+
+    it("should store the instance in globalThis.awslambda", async () => {
+      // THEN
+      expect(globalThis.awslambda.InvokeStore).toBeDefined();
+      expect(await globalThis.awslambda.InvokeStore).toBe(
+        await OriginalImport.getInstanceAsync(),
+      );
+    });
+
+    it("should share context between original import and global reference", async () => {
+      // GIVEN
+      const testRequestId = "shared-context-test";
+      const testKey = "test-key";
+      const testValue = "test-value";
+
+      const originalImport = await OriginalImport.getInstanceAsync();
+
+      // WHEN - Use the original import to set up context
+      await originalImport.run(
+        { [InvokeStoreBase.PROTECTED_KEYS.REQUEST_ID]: testRequestId },
+        async () => {
+          originalImport.set(testKey, testValue);
+
+          // THEN - Global reference should see the same context
+          const globalInstance = globalThis.awslambda.InvokeStore!;
+          expect(globalInstance.getRequestId()).toBe(testRequestId);
+          expect(globalInstance.get(testKey)).toBe(testValue);
+        },
+      );
+    });
+
+    it("should maintain the same storage across different references", async () => {
+      // GIVEN
+      const globalInstance = globalThis.awslambda.InvokeStore!;
+      const originalImport = await OriginalImport.getInstanceAsync();
+      const testRequestId = "global-test";
+      const testKey = "global-key";
+      const testValue = "global-value";
+
+      // WHEN - Set context using global reference
+      await globalInstance.run(
+        { [InvokeStoreBase.PROTECTED_KEYS.REQUEST_ID]: testRequestId },
+        async () => {
+          globalInstance.set(testKey, testValue);
+
+          // THEN - Original import should see the same context
+          expect(originalImport.getRequestId()).toBe(testRequestId);
+          expect(originalImport.get(testKey)).toBe(testValue);
+        },
+      );
+    });
   });
 
-  it("should maintain the same storage across different references", async () => {
-    // GIVEN
-    const globalInstance = globalThis.awslambda.InvokeStore!;
-    const testRequestId = "global-test";
-    const testKey = "global-key";
-    const testValue = "global-value";
+  describe("InvokeStore Existing Instance", () => {
+    const originalGlobalAwsLambda = globalThis.awslambda;
 
-    // WHEN - Set context using global reference
-    await globalInstance.run(
-      { [globalInstance.PROTECTED_KEYS.REQUEST_ID]: testRequestId },
-      () => {
-        globalInstance.set(testKey, testValue);
+    beforeEach(() => {
+      delete (globalThis as any).awslambda;
+      globalThis.awslambda = {};
 
-        // THEN - Original import should see the same context
-        expect(OriginalImport.getRequestId()).toBe(testRequestId);
-        expect(OriginalImport.get(testKey)).toBe(testValue);
-      }
-    );
+      vi.resetModules();
+    });
+
+    afterAll(() => {
+      globalThis.awslambda = originalGlobalAwsLambda;
+    });
+
+    it("should use existing instance from globalThis.awslambda.InvokeStore", async () => {
+      // GIVEN
+      const mockInstance = {
+        PROTECTED_KEYS: {
+          REQUEST_ID: "_AWS_LAMBDA_REQUEST_ID",
+          X_RAY_TRACE_ID: "_AWS_LAMBDA_TRACE_ID",
+        },
+        run: vi.fn(),
+        getContext: vi.fn(),
+        get: vi.fn(),
+        set: vi.fn(),
+        getRequestId: vi.fn().mockReturnValue("mock-request-id"),
+        getXRayTraceId: vi.fn(),
+        getTenantId: vi.fn().mockReturnValue("my-test-tenant-id"),
+        hasContext: vi.fn(),
+      };
+
+      // @ts-expect-error - mockInstance can be loosely related to original type
+      globalThis.awslambda.InvokeStore = mockInstance;
+
+      // WHEN
+      const { InvokeStore: ReimportedStore } = await import(
+        "./invoke-store.js"
+      );
+      const awaitedReimportedStore = await ReimportedStore.getInstanceAsync();
+
+      // THEN
+      expect(awaitedReimportedStore).toBe(mockInstance);
+      expect(awaitedReimportedStore.getRequestId()).toBe("mock-request-id");
+      expect(awaitedReimportedStore.getTenantId()).toBe("my-test-tenant-id");
+    });
   });
 
-  it("should maintain singleton behavior with dynamic imports", async () => {
-    // GIVEN
-    const testRequestId = "dynamic-import-test";
-    const testTenantId = "dynamic-import-tenant-id-test";
-    const testKey = "dynamic-key";
-    const testValue = "dynamic-value";
+  describe("InvokeStore Environment Variable Opt-Out", () => {
+    const originalEnv = process.env;
 
-    // WHEN - Set up context with original import
-    await OriginalImport.run(
-      {
-        [OriginalImport.PROTECTED_KEYS.REQUEST_ID]: testRequestId,
-        [OriginalImport.PROTECTED_KEYS.TENANT_ID]: testTenantId,
-      },
-      async () => {
-        OriginalImport.set(testKey, testValue);
+    beforeEach(() => {
+      process.env = { ...originalEnv };
+      delete (globalThis as any).awslambda;
 
-        // Dynamically import the module again
-        const dynamicModule = await import("./invoke-store.js");
-        const DynamicImport = dynamicModule.InvokeStore;
+      vi.resetModules();
+    });
 
-        // THEN - Dynamically imported instance should see the same context
-        expect(DynamicImport).toBe(OriginalImport); // Same instance
-        expect(DynamicImport.getRequestId()).toBe(testRequestId);
-        expect(DynamicImport.getTenantId()).toBe(testTenantId);
-        expect(DynamicImport.get(testKey)).toBe(testValue);
+    afterAll(() => {
+      process.env = originalEnv;
+    });
 
-        // WHEN - Set a new value using dynamic import
-        const newKey = "new-dynamic-key";
-        const newValue = "new-dynamic-value";
-        DynamicImport.set(newKey, newValue);
+    it("should respect AWS_LAMBDA_NODEJS_NO_GLOBAL_AWSLAMBDA=1", async () => {
+      // GIVEN
+      process.env.AWS_LAMBDA_NODEJS_NO_GLOBAL_AWSLAMBDA = "1";
 
-        // THEN - Original import should see the new value
-        expect(OriginalImport.get(newKey)).toBe(newValue);
-      }
-    );
-  });
-});
+      // WHEN - Import the module with the environment variable set
+      const { InvokeStore } = await import("./invoke-store.js");
+      const invokeStore = await InvokeStore.getInstanceAsync();
 
-describe("InvokeStore Existing Instance", () => {
-  const originalGlobalAwsLambda = globalThis.awslambda;
+      // THEN - The global namespace should not be modified
+      expect(globalThis.awslambda?.InvokeStore).toBeUndefined();
 
-  beforeEach(() => {
-    delete (globalThis as any).awslambda;
-    globalThis.awslambda = {};
+      let requestId: string | undefined;
+      await invokeStore.run(
+        { [InvokeStoreBase.PROTECTED_KEYS.REQUEST_ID]: "test-id" },
+        () => {
+          requestId = invokeStore.getRequestId();
+        },
+      );
+      expect(requestId).toBe("test-id");
+    });
 
-    vi.resetModules();
-  });
+    it("should respect AWS_LAMBDA_NODEJS_NO_GLOBAL_AWSLAMBDA=true", async () => {
+      // GIVEN
+      process.env.AWS_LAMBDA_NODEJS_NO_GLOBAL_AWSLAMBDA = "true";
 
-  afterAll(() => {
-    globalThis.awslambda = originalGlobalAwsLambda;
-  });
+      // WHEN - Import the module with the environment variable set
+      const { InvokeStore } = await import("./invoke-store.js");
+      const invokeStore = await InvokeStore.getInstanceAsync();
 
-  it("should use existing instance from globalThis.awslambda.InvokeStore", async () => {
-    // GIVEN
-    const mockInstance = {
-      PROTECTED_KEYS: {
-        REQUEST_ID: "_AWS_LAMBDA_REQUEST_ID",
-        X_RAY_TRACE_ID: "_AWS_LAMBDA_TRACE_ID",
-      },
-      run: vi.fn(),
-      getContext: vi.fn(),
-      get: vi.fn(),
-      set: vi.fn(),
-      getRequestId: vi.fn().mockReturnValue("mock-request-id"),
-      getXRayTraceId: vi.fn(),
-      getTenantId: vi.fn().mockReturnValue("my-test-tenant-id"),
-      hasContext: vi.fn(),
-    };
+      // THEN - The global namespace should not be modified
+      expect(globalThis.awslambda?.InvokeStore).toBeUndefined();
 
-    // @ts-expect-error - mockInstance can be loosely related to original type
-    globalThis.awslambda.InvokeStore = mockInstance;
-
-    // WHEN
-    const { InvokeStore: ReimportedStore } = await import("./invoke-store.js");
-
-    // THEN
-    expect(ReimportedStore).toBe(mockInstance);
-    expect(ReimportedStore.getRequestId()).toBe("mock-request-id");
-    expect(ReimportedStore.getTenantId()).toBe("my-test-tenant-id");
-  });
-});
-
-describe("InvokeStore Environment Variable Opt-Out", () => {
-  const originalEnv = process.env;
-
-  beforeEach(() => {
-    process.env = { ...originalEnv };
-    delete (globalThis as any).awslambda;
-
-    vi.resetModules();
-  });
-
-  afterAll(() => {
-    process.env = originalEnv;
-  });
-
-  it("should respect AWS_LAMBDA_NODEJS_NO_GLOBAL_AWSLAMBDA=1", async () => {
-    // GIVEN
-    process.env.AWS_LAMBDA_NODEJS_NO_GLOBAL_AWSLAMBDA = "1";
-
-    // WHEN - Import the module with the environment variable set
-    const { InvokeStore } = await import("./invoke-store.js");
-
-    // THEN - The global namespace should not be modified
-    expect(globalThis.awslambda?.InvokeStore).toBeUndefined();
-
-    let requestId: string | undefined;
-    await InvokeStore.run(
-      { [InvokeStore.PROTECTED_KEYS.REQUEST_ID]: "test-id" },
-      () => {
-        requestId = InvokeStore.getRequestId();
-      }
-    );
-    expect(requestId).toBe("test-id");
-  });
-
-  it("should respect AWS_LAMBDA_NODEJS_NO_GLOBAL_AWSLAMBDA=true", async () => {
-    // GIVEN
-    process.env.AWS_LAMBDA_NODEJS_NO_GLOBAL_AWSLAMBDA = "true";
-
-    // WHEN - Import the module with the environment variable set
-    const { InvokeStore } = await import("./invoke-store.js");
-
-    // THEN - The global namespace should not be modified
-    expect(globalThis.awslambda?.InvokeStore).toBeUndefined();
-
-    let requestId: string | undefined;
-    await InvokeStore.run(
-      { [InvokeStore.PROTECTED_KEYS.REQUEST_ID]: "test-id" },
-      () => {
-        requestId = InvokeStore.getRequestId();
-      }
-    );
-    expect(requestId).toBe("test-id");
+      let requestId: string | undefined;
+      await invokeStore.run(
+        { [InvokeStoreBase.PROTECTED_KEYS.REQUEST_ID]: "test-id" },
+        () => {
+          requestId = invokeStore.getRequestId();
+        },
+      );
+      expect(requestId).toBe("test-id");
+    });
   });
 });

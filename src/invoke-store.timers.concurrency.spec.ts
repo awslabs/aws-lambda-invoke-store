@@ -1,11 +1,18 @@
-import { describe, it, expect } from "vitest";
-import { InvokeStore } from "./invoke-store.js";
+import { describe, beforeEach, vi, it, expect } from "vitest";
+import { InvokeStore, InvokeStoreBase } from "./invoke-store.js";
 
 /**
  * These tests specifically verify context preservation across various
  * timer and async APIs without using fake timers.
  */
-describe("InvokeStore timer functions context preservation", () => {
+describe("InvokeStore timer functions context preservation", async () => {
+  let invokeStore: InvokeStoreBase;
+
+  beforeEach(async () => {
+    vi.stubEnv("AWS_LAMBDA_MAX_CONCURRENCY", "2");
+    invokeStore = await InvokeStore.getInstanceAsync();
+  });
+
   const delay = (ms: number) =>
     new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -16,21 +23,21 @@ describe("InvokeStore timer functions context preservation", () => {
       const traces: string[] = [];
 
       // WHEN
-      await InvokeStore.run(
+      await invokeStore.run(
         {
-          [InvokeStore.PROTECTED_KEYS.REQUEST_ID]: testRequestId,
+          [InvokeStoreBase.PROTECTED_KEYS.REQUEST_ID]: testRequestId,
         },
         async () => {
-          traces.push(`before-${InvokeStore.getRequestId()}`);
+          traces.push(`before-${invokeStore.getRequestId()}`);
 
           await new Promise<void>((resolve) => {
             setTimeout(() => {
-              traces.push(`inside-timeout-${InvokeStore.getRequestId()}`);
+              traces.push(`inside-timeout-${invokeStore.getRequestId()}`);
               resolve();
             }, 10);
           });
 
-          traces.push(`after-${InvokeStore.getRequestId()}`);
+          traces.push(`after-${invokeStore.getRequestId()}`);
         },
       );
 
@@ -48,25 +55,25 @@ describe("InvokeStore timer functions context preservation", () => {
       const traces: string[] = [];
 
       // WHEN
-      await InvokeStore.run(
+      await invokeStore.run(
         {
-          [InvokeStore.PROTECTED_KEYS.REQUEST_ID]: testRequestId,
+          [InvokeStoreBase.PROTECTED_KEYS.REQUEST_ID]: testRequestId,
         },
         async () => {
-          traces.push(`level-0-${InvokeStore.getRequestId()}`);
+          traces.push(`level-0-${invokeStore.getRequestId()}`);
 
           await new Promise<void>((resolve) => {
             setTimeout(() => {
-              traces.push(`level-1-${InvokeStore.getRequestId()}`);
+              traces.push(`level-1-${invokeStore.getRequestId()}`);
 
               setTimeout(() => {
-                traces.push(`level-2-${InvokeStore.getRequestId()}`);
+                traces.push(`level-2-${invokeStore.getRequestId()}`);
                 resolve();
               }, 10);
             }, 10);
           });
 
-          traces.push(`done-${InvokeStore.getRequestId()}`);
+          traces.push(`done-${invokeStore.getRequestId()}`);
         },
       );
 
@@ -87,21 +94,21 @@ describe("InvokeStore timer functions context preservation", () => {
       const traces: string[] = [];
 
       // WHEN
-      await InvokeStore.run(
+      await invokeStore.run(
         {
-          [InvokeStore.PROTECTED_KEYS.REQUEST_ID]: testRequestId,
+          [InvokeStoreBase.PROTECTED_KEYS.REQUEST_ID]: testRequestId,
         },
         async () => {
-          traces.push(`before-${InvokeStore.getRequestId()}`);
+          traces.push(`before-${invokeStore.getRequestId()}`);
 
           await new Promise<void>((resolve) => {
             setImmediate(() => {
-              traces.push(`inside-immediate-${InvokeStore.getRequestId()}`);
+              traces.push(`inside-immediate-${invokeStore.getRequestId()}`);
               resolve();
             });
           });
 
-          traces.push(`after-${InvokeStore.getRequestId()}`);
+          traces.push(`after-${invokeStore.getRequestId()}`);
         },
       );
 
@@ -119,25 +126,25 @@ describe("InvokeStore timer functions context preservation", () => {
       const traces: string[] = [];
 
       // WHEN
-      await InvokeStore.run(
+      await invokeStore.run(
         {
-          [InvokeStore.PROTECTED_KEYS.REQUEST_ID]: testRequestId,
+          [InvokeStoreBase.PROTECTED_KEYS.REQUEST_ID]: testRequestId,
         },
         async () => {
-          traces.push(`level-0-${InvokeStore.getRequestId()}`);
+          traces.push(`level-0-${invokeStore.getRequestId()}`);
 
           await new Promise<void>((resolve) => {
             setImmediate(() => {
-              traces.push(`level-1-${InvokeStore.getRequestId()}`);
+              traces.push(`level-1-${invokeStore.getRequestId()}`);
 
               setImmediate(() => {
-                traces.push(`level-2-${InvokeStore.getRequestId()}`);
+                traces.push(`level-2-${invokeStore.getRequestId()}`);
                 resolve();
               });
             });
           });
 
-          traces.push(`done-${InvokeStore.getRequestId()}`);
+          traces.push(`done-${invokeStore.getRequestId()}`);
         },
       );
 
@@ -158,21 +165,21 @@ describe("InvokeStore timer functions context preservation", () => {
       const traces: string[] = [];
 
       // WHEN
-      await InvokeStore.run(
+      await invokeStore.run(
         {
-          [InvokeStore.PROTECTED_KEYS.REQUEST_ID]: testRequestId,
+          [InvokeStoreBase.PROTECTED_KEYS.REQUEST_ID]: testRequestId,
         },
         async () => {
-          traces.push(`before-${InvokeStore.getRequestId()}`);
+          traces.push(`before-${invokeStore.getRequestId()}`);
 
           await new Promise<void>((resolve) => {
             process.nextTick(() => {
-              traces.push(`inside-nexttick-${InvokeStore.getRequestId()}`);
+              traces.push(`inside-nexttick-${invokeStore.getRequestId()}`);
               resolve();
             });
           });
 
-          traces.push(`after-${InvokeStore.getRequestId()}`);
+          traces.push(`after-${invokeStore.getRequestId()}`);
         },
       );
 
@@ -190,25 +197,25 @@ describe("InvokeStore timer functions context preservation", () => {
       const traces: string[] = [];
 
       // WHEN
-      await InvokeStore.run(
+      await invokeStore.run(
         {
-          [InvokeStore.PROTECTED_KEYS.REQUEST_ID]: testRequestId,
+          [InvokeStoreBase.PROTECTED_KEYS.REQUEST_ID]: testRequestId,
         },
         async () => {
-          traces.push(`level-0-${InvokeStore.getRequestId()}`);
+          traces.push(`level-0-${invokeStore.getRequestId()}`);
 
           await new Promise<void>((resolve) => {
             process.nextTick(() => {
-              traces.push(`level-1-${InvokeStore.getRequestId()}`);
+              traces.push(`level-1-${invokeStore.getRequestId()}`);
 
               process.nextTick(() => {
-                traces.push(`level-2-${InvokeStore.getRequestId()}`);
+                traces.push(`level-2-${invokeStore.getRequestId()}`);
                 resolve();
               });
             });
           });
 
-          traces.push(`done-${InvokeStore.getRequestId()}`);
+          traces.push(`done-${invokeStore.getRequestId()}`);
         },
       );
 
@@ -229,18 +236,18 @@ describe("InvokeStore timer functions context preservation", () => {
       const traces: string[] = [];
 
       // WHEN
-      await InvokeStore.run(
+      await invokeStore.run(
         {
-          [InvokeStore.PROTECTED_KEYS.REQUEST_ID]: testRequestId,
+          [InvokeStoreBase.PROTECTED_KEYS.REQUEST_ID]: testRequestId,
         },
         async () => {
-          traces.push(`before-${InvokeStore.getRequestId()}`);
+          traces.push(`before-${invokeStore.getRequestId()}`);
 
           await Promise.resolve().then(() => {
-            traces.push(`inside-promise-${InvokeStore.getRequestId()}`);
+            traces.push(`inside-promise-${invokeStore.getRequestId()}`);
           });
 
-          traces.push(`after-${InvokeStore.getRequestId()}`);
+          traces.push(`after-${invokeStore.getRequestId()}`);
         },
       );
 
@@ -258,27 +265,27 @@ describe("InvokeStore timer functions context preservation", () => {
       const traces: string[] = [];
 
       // WHEN
-      await InvokeStore.run(
+      await invokeStore.run(
         {
-          [InvokeStore.PROTECTED_KEYS.REQUEST_ID]: testRequestId,
+          [InvokeStoreBase.PROTECTED_KEYS.REQUEST_ID]: testRequestId,
         },
         async () => {
-          traces.push(`start-${InvokeStore.getRequestId()}`);
+          traces.push(`start-${invokeStore.getRequestId()}`);
 
           await Promise.resolve()
             .then(() => {
-              traces.push(`then-1-${InvokeStore.getRequestId()}`);
+              traces.push(`then-1-${invokeStore.getRequestId()}`);
               return delay(10);
             })
             .then(() => {
-              traces.push(`then-2-${InvokeStore.getRequestId()}`);
+              traces.push(`then-2-${invokeStore.getRequestId()}`);
               return Promise.resolve();
             })
             .then(() => {
-              traces.push(`then-3-${InvokeStore.getRequestId()}`);
+              traces.push(`then-3-${invokeStore.getRequestId()}`);
             });
 
-          traces.push(`end-${InvokeStore.getRequestId()}`);
+          traces.push(`end-${invokeStore.getRequestId()}`);
         },
       );
 
@@ -300,36 +307,36 @@ describe("InvokeStore timer functions context preservation", () => {
       const traces: string[] = [];
 
       // WHEN
-      await InvokeStore.run(
+      await invokeStore.run(
         {
-          [InvokeStore.PROTECTED_KEYS.REQUEST_ID]: testRequestId,
+          [InvokeStoreBase.PROTECTED_KEYS.REQUEST_ID]: testRequestId,
         },
         async () => {
-          traces.push(`start-${InvokeStore.getRequestId()}`);
+          traces.push(`start-${invokeStore.getRequestId()}`);
 
           const immediatePromise = new Promise<void>((resolve) => {
             setImmediate(() => {
-              traces.push(`immediate-${InvokeStore.getRequestId()}`);
+              traces.push(`immediate-${invokeStore.getRequestId()}`);
               resolve();
             });
           });
 
           const timeoutPromise = new Promise<void>((resolve) => {
             setTimeout(() => {
-              traces.push(`timeout-${InvokeStore.getRequestId()}`);
+              traces.push(`timeout-${invokeStore.getRequestId()}`);
               resolve();
             }, 0);
           });
 
           const nextTickPromise = new Promise<void>((resolve) => {
             process.nextTick(() => {
-              traces.push(`nextTick-${InvokeStore.getRequestId()}`);
+              traces.push(`nextTick-${invokeStore.getRequestId()}`);
               resolve();
             });
           });
 
           const promisePromise = Promise.resolve().then(() => {
-            traces.push(`promise-${InvokeStore.getRequestId()}`);
+            traces.push(`promise-${invokeStore.getRequestId()}`);
           });
 
           await Promise.all([
@@ -339,7 +346,7 @@ describe("InvokeStore timer functions context preservation", () => {
             promisePromise,
           ]);
 
-          traces.push(`end-${InvokeStore.getRequestId()}`);
+          traces.push(`end-${invokeStore.getRequestId()}`);
         },
       );
 
@@ -361,26 +368,26 @@ describe("InvokeStore timer functions context preservation", () => {
 
       // WHEN - Simulate concurrent invocations
       await Promise.all([
-        InvokeStore.run(
+        invokeStore.run(
           {
-            [InvokeStore.PROTECTED_KEYS.REQUEST_ID]: "request-1",
-            [InvokeStore.PROTECTED_KEYS.X_RAY_TRACE_ID]: "trace-1",
+            [InvokeStoreBase.PROTECTED_KEYS.REQUEST_ID]: "request-1",
+            [InvokeStoreBase.PROTECTED_KEYS.X_RAY_TRACE_ID]: "trace-1",
           },
           async () => {
-            traces.push(`start-1-${InvokeStore.getRequestId()}`);
+            traces.push(`start-1-${invokeStore.getRequestId()}`);
             await delay(20); // Longer delay
-            traces.push(`end-1-${InvokeStore.getRequestId()}`);
+            traces.push(`end-1-${invokeStore.getRequestId()}`);
           },
         ),
-        InvokeStore.run(
+        invokeStore.run(
           {
-            [InvokeStore.PROTECTED_KEYS.REQUEST_ID]: "request-2",
-            [InvokeStore.PROTECTED_KEYS.X_RAY_TRACE_ID]: "trace-2",
+            [InvokeStoreBase.PROTECTED_KEYS.REQUEST_ID]: "request-2",
+            [InvokeStoreBase.PROTECTED_KEYS.X_RAY_TRACE_ID]: "trace-2",
           },
           async () => {
-            traces.push(`start-2-${InvokeStore.getRequestId()}`);
+            traces.push(`start-2-${invokeStore.getRequestId()}`);
             await delay(10); // Shorter delay
-            traces.push(`end-2-${InvokeStore.getRequestId()}`);
+            traces.push(`end-2-${invokeStore.getRequestId()}`);
           },
         ),
       ]);
@@ -400,58 +407,58 @@ describe("InvokeStore timer functions context preservation", () => {
 
       // WHEN - Simulate concurrent invocations with different async operations
       await Promise.all([
-        InvokeStore.run(
+        invokeStore.run(
           {
-            [InvokeStore.PROTECTED_KEYS.REQUEST_ID]: "request-1",
+            [InvokeStoreBase.PROTECTED_KEYS.REQUEST_ID]: "request-1",
           },
           async () => {
-            traces.push(`start-1-${InvokeStore.getRequestId()}`);
+            traces.push(`start-1-${invokeStore.getRequestId()}`);
 
             // Use setTimeout
             await new Promise<void>((resolve) => {
               setTimeout(() => {
-                traces.push(`timeout-1-${InvokeStore.getRequestId()}`);
+                traces.push(`timeout-1-${invokeStore.getRequestId()}`);
                 resolve();
               }, 15);
             });
 
-            traces.push(`end-1-${InvokeStore.getRequestId()}`);
+            traces.push(`end-1-${invokeStore.getRequestId()}`);
           },
         ),
-        InvokeStore.run(
+        invokeStore.run(
           {
-            [InvokeStore.PROTECTED_KEYS.REQUEST_ID]: "request-2",
+            [InvokeStoreBase.PROTECTED_KEYS.REQUEST_ID]: "request-2",
           },
           async () => {
-            traces.push(`start-2-${InvokeStore.getRequestId()}`);
+            traces.push(`start-2-${invokeStore.getRequestId()}`);
 
             // Use setImmediate
             await new Promise<void>((resolve) => {
               setImmediate(() => {
-                traces.push(`immediate-2-${InvokeStore.getRequestId()}`);
+                traces.push(`immediate-2-${invokeStore.getRequestId()}`);
                 resolve();
               });
             });
 
-            traces.push(`end-2-${InvokeStore.getRequestId()}`);
+            traces.push(`end-2-${invokeStore.getRequestId()}`);
           },
         ),
-        InvokeStore.run(
+        invokeStore.run(
           {
-            [InvokeStore.PROTECTED_KEYS.REQUEST_ID]: "request-3",
+            [InvokeStoreBase.PROTECTED_KEYS.REQUEST_ID]: "request-3",
           },
           async () => {
-            traces.push(`start-3-${InvokeStore.getRequestId()}`);
+            traces.push(`start-3-${invokeStore.getRequestId()}`);
 
             // Use process.nextTick
             await new Promise<void>((resolve) => {
               process.nextTick(() => {
-                traces.push(`nextTick-3-${InvokeStore.getRequestId()}`);
+                traces.push(`nextTick-3-${invokeStore.getRequestId()}`);
                 resolve();
               });
             });
 
-            traces.push(`end-3-${InvokeStore.getRequestId()}`);
+            traces.push(`end-3-${invokeStore.getRequestId()}`);
           },
         ),
       ]);
@@ -504,17 +511,17 @@ describe("InvokeStore timer functions context preservation", () => {
       const iterations = 3;
 
       // WHEN
-      await InvokeStore.run(
+      await invokeStore.run(
         {
-          [InvokeStore.PROTECTED_KEYS.REQUEST_ID]: testRequestId,
+          [InvokeStoreBase.PROTECTED_KEYS.REQUEST_ID]: testRequestId,
         },
         async () => {
-          traces.push(`start-${InvokeStore.getRequestId()}`);
+          traces.push(`start-${invokeStore.getRequestId()}`);
 
           let count = 0;
           await new Promise<void>((resolve) => {
             function recursive() {
-              traces.push(`iteration-${count}-${InvokeStore.getRequestId()}`);
+              traces.push(`iteration-${count}-${invokeStore.getRequestId()}`);
               count++;
 
               if (count < iterations) {
@@ -527,7 +534,7 @@ describe("InvokeStore timer functions context preservation", () => {
             recursive();
           });
 
-          traces.push(`end-${InvokeStore.getRequestId()}`);
+          traces.push(`end-${invokeStore.getRequestId()}`);
         },
       );
 
@@ -547,30 +554,30 @@ describe("InvokeStore timer functions context preservation", () => {
       const traces: string[] = [];
 
       // WHEN
-      await InvokeStore.run(
+      await invokeStore.run(
         {
-          [InvokeStore.PROTECTED_KEYS.REQUEST_ID]: testRequestId,
+          [InvokeStoreBase.PROTECTED_KEYS.REQUEST_ID]: testRequestId,
         },
         async () => {
-          traces.push(`start-${InvokeStore.getRequestId()}`);
+          traces.push(`start-${invokeStore.getRequestId()}`);
 
           // Queue a setTimeout that triggers setImmediate
           await new Promise<void>((resolve) => {
             setTimeout(() => {
-              traces.push(`timeout-${InvokeStore.getRequestId()}`);
+              traces.push(`timeout-${invokeStore.getRequestId()}`);
 
               setImmediate(() => {
-                traces.push(`immediate-${InvokeStore.getRequestId()}`);
+                traces.push(`immediate-${invokeStore.getRequestId()}`);
 
                 process.nextTick(() => {
-                  traces.push(`nextTick-${InvokeStore.getRequestId()}`);
+                  traces.push(`nextTick-${invokeStore.getRequestId()}`);
                   resolve();
                 });
               });
             }, 10);
           });
 
-          traces.push(`end-${InvokeStore.getRequestId()}`);
+          traces.push(`end-${invokeStore.getRequestId()}`);
         },
       );
 

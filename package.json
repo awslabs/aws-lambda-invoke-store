@@ -1,9 +1,10 @@
 {
   "name": "@aws/lambda-invoke-store",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "description": "Invoke scoped data storage for AWS Lambda Node.js Runtime Environment",
   "homepage": "https://github.com/awslabs/aws-lambda-invoke-store",
   "main": "./dist-cjs/invoke-store.js",
+  "types": "./dist-types/invoke-store.d.ts",
   "module": "./dist-es/invoke-store.js",
   "exports": {
     ".": {
@@ -32,7 +33,7 @@
     "build": "yarn clean && yarn build:types && node ./scripts/build-rollup.js",
     "build:types": "tsc -p tsconfig.types.json",
     "clean": "rm -rf dist-types dist-cjs dist-es",
-    "test": "vitest run",
+    "test": "vitest run --reporter verbose",
     "test:watch": "vitest watch",
     "release": "yarn build && changeset publish"
   },
