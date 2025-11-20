@@ -1,5 +1,11 @@
 # @aws/lambda-invoke-store
 
+## 0.2.1
+
+### Patch Changes
+
+- include types declarations ([002c21bab6404f5d59b81ada7f7f6db710f432ca](https://github.com/awslabs/aws-lambda-invoke-store/commit/002c21bab6404f5d59b81ada7f7f6db710f432ca))
+
 ## 0.2.0
 
 ### Minor Changes
