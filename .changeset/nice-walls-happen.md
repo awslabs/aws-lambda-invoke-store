@@ -2,4 +2,4 @@
 "@aws/lambda-invoke-store": patch
 ---
 
-include declarations
+include types declarations
