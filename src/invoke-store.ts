@@ -92,11 +92,7 @@ class InvokeStoreSingle extends InvokeStoreBase {
 
   run<T>(context: Context, fn: () => T): T {
     this.currentContext = context;
-    try {
-      return fn();
-    } finally {
-      this.currentContext = undefined;
-    }
+    return fn();
   }
 }
 

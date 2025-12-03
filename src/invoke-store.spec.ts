@@ -21,15 +21,6 @@ describe.each([
     invokeStore = await InvokeStore.getInstanceAsync();
 
     describe("getRequestId and getXRayTraceId", () => {
-      it("should return placeholder when called outside run context", () => {
-        // WHEN
-        const requestId = invokeStore.getRequestId();
-        const traceId = invokeStore.getXRayTraceId();
-
-        // THEN
-        expect(requestId).toBe("-");
-        expect(traceId).toBeUndefined();
-      });
 
       it("should return current invoke IDs when called within run context", async () => {
         // WHEN
@@ -100,12 +91,31 @@ describe.each([
     });
 
     describe("getContext", () => {
-      it("should return undefined when outside run context", () => {
-        // WHEN
-        const context = invokeStore.getContext();
+      it("should replace context on subsequent run calls", async () => {
+        // WHEN - First run
+        await invokeStore.run(
+          {
+            [InvokeStoreBase.PROTECTED_KEYS.REQUEST_ID]: "first-id",
+          },
+          () => {
+            expect(invokeStore.getRequestId()).toBe("first-id");
+          },
+        );
 
-        // THEN
-        expect(context).toBeUndefined();
+        // WHEN - Second run should replace context
+        await invokeStore.run(
+          {
+            [InvokeStoreBase.PROTECTED_KEYS.REQUEST_ID]: "second-id",
+          },
+          () => {
+            // THEN - Should have new context, not old one
+            expect(invokeStore.getRequestId()).toBe("second-id");
+            const context = invokeStore.getContext();
+            expect(context).toEqual({
+              [InvokeStoreBase.PROTECTED_KEYS.REQUEST_ID]: "second-id",
+            });
+          },
+        );
       });
 
       it("should return complete context with Lambda and custom fields", async () => {
@@ -133,14 +143,6 @@ describe.each([
     });
 
     describe("hasContext", () => {
-      it("should return false when outside run context", () => {
-        // WHEN
-        const hasContext = invokeStore.hasContext();
-
-        // THEN
-        expect(hasContext).toBe(false);
-      });
-
       it("should return true when inside run context", async () => {
         // WHEN
         const result = await invokeStore.run(
@@ -158,7 +160,7 @@ describe.each([
     });
 
     describe("error handling", () => {
-      it("should propagate errors while maintaining isolation", async () => {
+      it("should propagate errors", async () => {
         // GIVEN
         const error = new Error("test error");
 
@@ -174,7 +176,6 @@ describe.each([
 
         // THEN
         await expect(promise).rejects.toThrow(error);
-        expect(invokeStore.getRequestId()).toBe("-");
       });
 
       it("should handle errors in concurrent executions independently", async () => {
@@ -205,7 +206,6 @@ describe.each([
         // THEN
         expect(traces).toContain("success-success-id");
         expect(traces).toContain("before-error-error-id");
-        expect(invokeStore.getRequestId()).toBe("-");
       });
     });
 
@@ -242,7 +242,6 @@ describe.each([
 
         // THEN
         await expect(promise).rejects.toThrow(error);
-        expect(invokeStore.getRequestId()).toBe("-");
       });
     });
   });
