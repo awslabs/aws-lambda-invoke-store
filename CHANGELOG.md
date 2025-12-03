@@ -1,5 +1,11 @@
 # @aws/lambda-invoke-store
 
+## 0.2.2
+
+### Patch Changes
+
+- Fix context cleared prematurely in InvokeStoreSingle with async functions. Removed try-finally block that was clearing context before async operations completed. ([9bed56d892dbe8473a9b8b7f3c4aa5f4e6612057](https://github.com/awslabs/aws-lambda-invoke-store/commit/9bed56d892dbe8473a9b8b7f3c4aa5f4e6612057))
+
 ## 0.2.1
 
 ### Patch Changes
