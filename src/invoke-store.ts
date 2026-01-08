@@ -4,6 +4,12 @@ interface Context {
   [key: symbol]: unknown;
 }
 
+declare global {
+  namespace awslambda {
+    let InvokeStore: InvokeStoreBase | undefined;
+  }
+}
+
 const PROTECTED_KEYS = {
   REQUEST_ID: Symbol.for("_AWS_LAMBDA_REQUEST_ID"),
   X_RAY_TRACE_ID: Symbol.for("_AWS_LAMBDA_X_RAY_TRACE_ID"),
@@ -13,13 +19,6 @@ const PROTECTED_KEYS = {
 const NO_GLOBAL_AWS_LAMBDA = ["true", "1"].includes(
   process.env?.AWS_LAMBDA_NODEJS_NO_GLOBAL_AWSLAMBDA ?? "",
 );
-
-declare global {
-  var awslambda: {
-    InvokeStore?: InvokeStoreBase;
-    [key: string]: unknown;
-  };
-}
 
 if (!NO_GLOBAL_AWS_LAMBDA) {
   globalThis.awslambda = globalThis.awslambda || {};
@@ -184,7 +183,7 @@ export namespace InvokeStore {
             if (globalThis.awslambda?.InvokeStore) {
               delete globalThis.awslambda.InvokeStore;
             }
-            globalThis.awslambda = {};
+            globalThis.awslambda = {InvokeStore: undefined};
           },
         }
       : undefined;
