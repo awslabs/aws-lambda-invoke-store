@@ -1,5 +1,11 @@
 # @aws/lambda-invoke-store
 
+## 0.2.3
+
+### Patch Changes
+
+- use global namespace when defining awslambda InvokeStore global type ([8437cdc564712b5ff4055bb69afa85ad9543952d](https://github.com/awslabs/aws-lambda-invoke-store/commit/8437cdc564712b5ff4055bb69afa85ad9543952d))
+
 ## 0.2.2
 
 ### Patch Changes
