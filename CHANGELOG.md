@@ -1,5 +1,11 @@
 # @aws/lambda-invoke-store
 
+## 0.2.4
+
+### Patch Changes
+
+- Added optional boolean argumanet to force the use of InvokeStoreMulti(AsyncLocalStorage). ([PR #34](https://github.com/awslabs/aws-lambda-invoke-store/pull/34))
+
 ## 0.2.3
 
 ### Patch Changes
