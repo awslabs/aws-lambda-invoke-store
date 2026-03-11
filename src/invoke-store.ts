@@ -152,11 +152,11 @@ class InvokeStoreMulti extends InvokeStoreBase {
 export namespace InvokeStore {
   let instance: Promise<InvokeStoreBase> | null = null;
 
-  export async function getInstanceAsync(): Promise<InvokeStoreBase> {
+  export async function getInstanceAsync(forceInvokeStoreMulti: boolean | undefined): Promise<InvokeStoreBase> {
     if (!instance) {
       // Lock synchronously on first invoke by immediately assigning the promise
       instance = (async () => {
-        const isMulti = "AWS_LAMBDA_MAX_CONCURRENCY" in process.env;
+        const isMulti = forceInvokeStoreMulti === true || "AWS_LAMBDA_MAX_CONCURRENCY" in process.env;
         const newInstance = isMulti
           ? await InvokeStoreMulti.create()
           : new InvokeStoreSingle();
