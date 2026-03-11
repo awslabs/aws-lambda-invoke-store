@@ -152,7 +152,7 @@ class InvokeStoreMulti extends InvokeStoreBase {
 export namespace InvokeStore {
   let instance: Promise<InvokeStoreBase> | null = null;
 
-  export async function getInstanceAsync(forceInvokeStoreMulti: boolean | undefined = undefined): Promise<InvokeStoreBase> {
+  export async function getInstanceAsync(forceInvokeStoreMulti?: boolean): Promise<InvokeStoreBase> {
     if (!instance) {
       // Lock synchronously on first invoke by immediately assigning the promise
       instance = (async () => {
