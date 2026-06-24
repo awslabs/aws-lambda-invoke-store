@@ -14,6 +14,9 @@ const PROTECTED_KEYS = {
   REQUEST_ID: Symbol.for("_AWS_LAMBDA_REQUEST_ID"),
   X_RAY_TRACE_ID: Symbol.for("_AWS_LAMBDA_X_RAY_TRACE_ID"),
   TENANT_ID: Symbol.for("_AWS_LAMBDA_TENANT_ID"),
+  TRACEPARENT: Symbol.for("_AWS_LAMBDA_TRACEPARENT"),
+  TRACESTATE: Symbol.for("_AWS_LAMBDA_TRACESTATE"),
+  BAGGAGE: Symbol.for("_AWS_LAMBDA_BAGGAGE"),
 } as const;
 
 const NO_GLOBAL_AWS_LAMBDA = ["true", "1"].includes(
@@ -56,6 +59,18 @@ export abstract class InvokeStoreBase {
 
   getTenantId(): string | undefined {
     return this.get<string>(PROTECTED_KEYS.TENANT_ID);
+  }
+
+  getTraceparent(): string | undefined {
+    return this.get<string>(PROTECTED_KEYS.TRACEPARENT);
+  }
+
+  getTracestate(): string | undefined {
+    return this.get<string>(PROTECTED_KEYS.TRACESTATE);
+  }
+
+  getBaggage(): string | undefined {
+    return this.get<string>(PROTECTED_KEYS.BAGGAGE);
   }
 }
 
