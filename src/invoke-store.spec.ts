@@ -43,6 +43,89 @@ describe.each([
       });
     });
 
+    describe("getTraceparent, getTracestate, and getBaggage", () => {
+      it("should return w3c tracing headers when set in context", async () => {
+        // WHEN
+        const result = await invokeStore.run(
+          {
+            [InvokeStoreBase.PROTECTED_KEYS.REQUEST_ID]: "test-id",
+            [InvokeStoreBase.PROTECTED_KEYS.TRACEPARENT]:
+              "00-0af7651916cd43dd8448eb211c80319c-b7ad6b7169203331-01",
+            [InvokeStoreBase.PROTECTED_KEYS.TRACESTATE]: "congo=t61rcWkgMzE",
+            [InvokeStoreBase.PROTECTED_KEYS.BAGGAGE]:
+              "userId=alice,serverNode=DF28",
+          },
+          () => {
+            return {
+              traceparent: invokeStore.getTraceparent(),
+              tracestate: invokeStore.getTracestate(),
+              baggage: invokeStore.getBaggage(),
+            };
+          },
+        );
+
+        // THEN
+        expect(result.traceparent).toBe(
+          "00-0af7651916cd43dd8448eb211c80319c-b7ad6b7169203331-01",
+        );
+        expect(result.tracestate).toBe("congo=t61rcWkgMzE");
+        expect(result.baggage).toBe("userId=alice,serverNode=DF28");
+      });
+
+      it("should return undefined when w3c headers are not in context", async () => {
+        // WHEN
+        const result = await invokeStore.run(
+          {
+            [InvokeStoreBase.PROTECTED_KEYS.REQUEST_ID]: "test-id",
+          },
+          () => {
+            return {
+              traceparent: invokeStore.getTraceparent(),
+              tracestate: invokeStore.getTracestate(),
+              baggage: invokeStore.getBaggage(),
+            };
+          },
+        );
+
+        // THEN
+        expect(result.traceparent).toBeUndefined();
+        expect(result.tracestate).toBeUndefined();
+        expect(result.baggage).toBeUndefined();
+      });
+
+      it("should prevent modifying w3c tracing protected fields", async () => {
+        // WHEN & THEN
+        await invokeStore.run(
+          {
+            [InvokeStoreBase.PROTECTED_KEYS.REQUEST_ID]: "test-id",
+            [InvokeStoreBase.PROTECTED_KEYS.TRACEPARENT]: "original",
+          },
+          () => {
+            expect(() => {
+              invokeStore.set(
+                InvokeStoreBase.PROTECTED_KEYS.TRACEPARENT,
+                "modified",
+              );
+            }).toThrow(/Cannot modify protected Lambda context field/);
+
+            expect(() => {
+              invokeStore.set(
+                InvokeStoreBase.PROTECTED_KEYS.TRACESTATE,
+                "modified",
+              );
+            }).toThrow(/Cannot modify protected Lambda context field/);
+
+            expect(() => {
+              invokeStore.set(
+                InvokeStoreBase.PROTECTED_KEYS.BAGGAGE,
+                "modified",
+              );
+            }).toThrow(/Cannot modify protected Lambda context field/);
+          },
+        );
+      });
+    });
+
     describe("custom properties", () => {
       it("should allow setting and getting custom properties", async () => {
         // WHEN
