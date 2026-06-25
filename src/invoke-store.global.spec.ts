@@ -120,6 +120,13 @@ describe.each([
         getRequestId: vi.fn().mockReturnValue("mock-request-id"),
         getXRayTraceId: vi.fn(),
         getTenantId: vi.fn().mockReturnValue("my-test-tenant-id"),
+        getTraceparent: vi
+          .fn()
+          .mockReturnValue(
+            "00-0af7651916cd43dd8448eb211c80319c-b7ad6b7169203331-01",
+          ),
+        getTracestate: vi.fn().mockReturnValue("congo=t61rcWkgMzE"),
+        getBaggage: vi.fn().mockReturnValue("userId=alice,serverNode=DF28"),
         hasContext: vi.fn(),
       };
 
@@ -136,6 +143,13 @@ describe.each([
       expect(awaitedReimportedStore).toBe(mockInstance);
       expect(awaitedReimportedStore.getRequestId()).toBe("mock-request-id");
       expect(awaitedReimportedStore.getTenantId()).toBe("my-test-tenant-id");
+      expect(awaitedReimportedStore.getTraceparent()).toBe(
+        "00-0af7651916cd43dd8448eb211c80319c-b7ad6b7169203331-01",
+      );
+      expect(awaitedReimportedStore.getTracestate()).toBe("congo=t61rcWkgMzE");
+      expect(awaitedReimportedStore.getBaggage()).toBe(
+        "userId=alice,serverNode=DF28",
+      );
     });
   });
 
