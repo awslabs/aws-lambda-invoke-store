@@ -8,7 +8,7 @@ concurrent executions.
 ## Features
 
 - **Invocation Isolation**: Safely store and retrieve data within a single Lambda invocation.
-- **Protected Lambda Context**: Built-in protection for Lambda execution metadata (requestId, [traceId](https://docs.aws.amazon.com/xray/latest/devguide/xray-concepts.html#xray-concepts-traces))
+- **Protected Lambda Context**: Built-in protection for Lambda execution metadata (requestId, [traceId](https://docs.aws.amazon.com/xray/latest/devguide/xray-concepts.html#xray-concepts-traces), [W3C Trace Context](https://www.w3.org/TR/trace-context/), [W3C Baggage](https://www.w3.org/TR/baggage/))
 - **Custom Data Storage**: Store any custom data within the invocation context
 - **Async/Await Support**: Full support for asynchronous operations with context preservation
 - **Type Safety**: Complete TypeScript type definitions
@@ -121,6 +121,30 @@ Convenience method to get the current [X-Ray trace ID](https://docs.aws.amazon.c
 
 ```typescript
 const traceId = invokeStore.getXRayTraceId(); // Returns undefined if not set or outside context
+```
+
+### invokeStore.getTraceparent()
+
+Convenience method to get the [W3C `traceparent`](https://www.w3.org/TR/trace-context/#traceparent-header) header value.
+
+```typescript
+const traceparent = invokeStore.getTraceparent(); // e.g. "00-0af7651916cd43dd8448eb211c80319c-b7ad6b7169203331-01"
+```
+
+### invokeStore.getTracestate()
+
+Convenience method to get the [W3C `tracestate`](https://www.w3.org/TR/trace-context/#tracestate-header) header value.
+
+```typescript
+const tracestate = invokeStore.getTracestate(); // e.g. "congo=t61rcWkgMzE,rojo=00f067aa0ba902b7"
+```
+
+### invokeStore.getBaggage()
+
+Convenience method to get the [W3C Baggage](https://www.w3.org/TR/baggage/) header value.
+
+```typescript
+const baggage = invokeStore.getBaggage(); // e.g. "userId=alice,serverNode=DF28"
 ```
 
 ### invokeStore.hasContext()
