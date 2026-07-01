@@ -1,5 +1,11 @@
 # @aws/lambda-invoke-store
 
+## 0.3.0
+
+### Minor Changes
+
+- add support for traceparent, tracestate and baggage ([379c21102b09456607aac500893ebca7d541c84e](https://github.com/awslabs/aws-lambda-invoke-store/commit/379c21102b09456607aac500893ebca7d541c84e))
+
 ## 0.2.4
 
 ### Patch Changes
